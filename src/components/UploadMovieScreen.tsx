@@ -155,16 +155,10 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
 
       setTimeout(() => {
         setPublishedSuccess(false);
-      }, 6000);
+      }, 7000);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('insufficient')) {
-        setErrorMsg('Firebase Rules Issue: Firestore rejected write permissions. In your Firebase Console (gen-lang-client-0056050608), go to Firestore Database > Rules and set "allow read, write: if true;" and click Publish.');
-      } else if (msg.toLowerCase().includes('not-found') || msg.toLowerCase().includes('database')) {
-        setErrorMsg('Firestore Database Not Created: In your Firebase Console (gen-lang-client-0056050608), click "Create database" under Firestore Database.');
-      } else {
-        setErrorMsg(`Cloud Error: ${msg}. If problem persists, verify Firestore database exists in Firebase Console.`);
-      }
+      setErrorMsg(`Cloud Sync Notice: ${msg}`);
     } finally {
       setIsPublishing(false);
     }
@@ -188,9 +182,12 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
             <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight font-sans">
               Creator Studio
             </h1>
-            <p className="text-xs text-neutral-400">
-              Secret Access Activated • Prems@3738
-            </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <p className="text-xs text-neutral-400">
+                Global Cloud Sync Active • Prems@3738
+              </p>
+            </div>
           </div>
         </div>
 
@@ -203,14 +200,14 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
       </div>
 
       {publishedSuccess && (
-        <div className="mb-6 p-4 rounded-xl bg-neutral-950 border border-white text-white flex items-center justify-between">
+        <div className="mb-6 p-4 rounded-xl bg-neutral-950 border border-emerald-500/50 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5 text-xs sm:text-sm font-bold">
-            <Check className="w-4 h-4 text-white" />
-            <span>Movie successfully published! It is now live at the top of Trending.</span>
+            <Check className="w-4 h-4 text-emerald-400" />
+            <span>Movie successfully published to Global Cloud! It is now live across all devices worldwide.</span>
           </div>
           <button
             onClick={onBack}
-            className="text-xs underline text-white hover:text-neutral-300 font-bold"
+            className="text-xs underline text-white hover:text-neutral-300 font-bold ml-2 shrink-0"
           >
             View on Trending
           </button>

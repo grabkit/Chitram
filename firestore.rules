@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+      return id is string && id.size() <= 128;
     }
 
     function isValidMovie(data) {
@@ -13,7 +13,7 @@ service cloud.firestore {
              data.posterUrl is string;
     }
 
-    // Global Public Movies Collection - anyone in the world can read
+    // Global Public Movies Collection - anyone in the world can read, publish, and delete
     match /movies/{movieId} {
       allow read, get, list: if true;
       allow create: if isValidId(movieId) && isValidMovie(request.resource.data);
