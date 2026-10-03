@@ -1,0 +1,34 @@
+{
+  "entities": {
+    "Movie": {
+      "title": "Movie",
+      "description": "A movie published for global streaming and download",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the movie", "maxLength": 200 },
+        "year": { "type": "number", "description": "Release year" },
+        "rating": { "type": "number", "description": "Movie rating out of 10" },
+        "duration": { "type": "string", "description": "Movie duration", "maxLength": 50 },
+        "quality": { "type": "string", "description": "Video quality badge", "maxLength": 30 },
+        "genre": { "type": "array", "description": "Movie genres" },
+        "director": { "type": "string", "description": "Director name", "maxLength": 100 },
+        "cast": { "type": "array", "description": "Star cast list" },
+        "languages": { "type": "array", "description": "Available audio languages" },
+        "synopsis": { "type": "string", "description": "Movie synopsis / storyline", "maxLength": 3000 },
+        "posterUrl": { "type": "string", "description": "Poster image URL", "maxLength": 500000 },
+        "backdropUrl": { "type": "string", "description": "Backdrop image URL", "maxLength": 500000 },
+        "videoSampleUrl": { "type": "string", "description": "Video stream URL", "maxLength": 2000 },
+        "downloadSizes": { "type": "object", "description": "File sizes for 4K, 1080p, 720p, 480p" },
+        "downloadLinks": { "type": "object", "description": "Direct download links" },
+        "createdAt": { "type": "number", "description": "Timestamp when published" }
+      },
+      "required": ["title", "year", "posterUrl"]
+    }
+  },
+  "firestore": {
+    "/movies/{movieId}": {
+      "schema": "Movie",
+      "description": "Collection of global published movies available to all users worldwide"
+    }
+  }
+}
