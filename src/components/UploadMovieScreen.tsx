@@ -430,10 +430,15 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
 
         {/* Section 3: Download Links & Sizes */}
         <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-4 sm:p-6 space-y-4">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <LinkIcon className="w-4 h-4 text-white" />
-            3. Movie Download Links & File Sizes
-          </h2>
+          <div>
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <LinkIcon className="w-4 h-4 text-white" />
+              3. Movie Download Links & File Sizes (uTorrent Ready)
+            </h2>
+            <p className="text-[11px] text-neutral-400 mt-1">
+              You can paste custom uTorrent Magnet URIs (<code className="text-neutral-300">magnet:?xt=urn:...</code>) or direct torrent links. (If left blank, an auto-configured high-speed magnet link will be generated).
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             {/* 4K UHD */}
@@ -447,7 +452,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               />
               <input
                 type="text"
-                placeholder="4K Download link (optional)"
+                placeholder="4K Magnet link / Torrent URL (optional)"
                 value={link4K}
                 onChange={(e) => setLink4K(e.target.value)}
                 className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
@@ -465,7 +470,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               />
               <input
                 type="text"
-                placeholder="1080p Download link (optional)"
+                placeholder="1080p Magnet link / Torrent URL (optional)"
                 value={link1080p}
                 onChange={(e) => setLink1080p(e.target.value)}
                 className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
@@ -483,7 +488,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               />
               <input
                 type="text"
-                placeholder="720p Download link (optional)"
+                placeholder="720p Magnet link / Torrent URL (optional)"
                 value={link720p}
                 onChange={(e) => setLink720p(e.target.value)}
                 className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
@@ -501,7 +506,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               />
               <input
                 type="text"
-                placeholder="480p Download link (optional)"
+                placeholder="480p Magnet link / Torrent URL (optional)"
                 value={link480p}
                 onChange={(e) => setLink480p(e.target.value)}
                 className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
