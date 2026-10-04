@@ -38,7 +38,7 @@ export function subscribeToGlobalMovies(
               synopsis: data.synopsis || '',
               posterUrl: data.posterUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=700&q=80',
               backdropUrl: data.backdropUrl || data.posterUrl || '',
-              videoSampleUrl: data.videoSampleUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+              videoSampleUrl: data.videoSampleUrl || 'https://www.youtube.com/embed/g3JUbg4v6gc',
               downloadSizes: data.downloadSizes || {
                 '4K': '3.8 GB',
                 '1080p': '1.8 GB',
@@ -46,6 +46,7 @@ export function subscribeToGlobalMovies(
                 '480p': '450 MB',
               },
               downloadLinks: data.downloadLinks || {},
+              extraDownloadOptions: Array.isArray(data.extraDownloadOptions) ? data.extraDownloadOptions : undefined,
               isCustom: true
             });
           }
@@ -100,7 +101,7 @@ export async function publishMovieToFirestore(movie: Movie): Promise<void> {
     synopsis: String(movie.synopsis || ''),
     posterUrl: String(movie.posterUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=700&q=80'),
     backdropUrl: String(movie.backdropUrl || movie.posterUrl || ''),
-    videoSampleUrl: String(movie.videoSampleUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'),
+    videoSampleUrl: String(movie.videoSampleUrl || 'https://www.youtube.com/embed/g3JUbg4v6gc'),
     downloadSizes: movie.downloadSizes || {
       '4K': '3.8 GB',
       '1080p': '1.8 GB',
@@ -108,6 +109,7 @@ export async function publishMovieToFirestore(movie: Movie): Promise<void> {
       '480p': '450 MB',
     },
     downloadLinks: cleanLinks,
+    extraDownloadOptions: Array.isArray(movie.extraDownloadOptions) ? movie.extraDownloadOptions : [],
     createdAt: Date.now()
   };
 

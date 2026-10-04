@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Star, Clock, Download, Check } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Download, Check, ExternalLink, RefreshCw, Play, Tv } from 'lucide-react';
 import { Movie, DownloadItem } from '../types';
 import { MovieCard } from './MovieCard';
 
@@ -12,24 +12,52 @@ interface MovieDetailScreenProps {
 }
 
 interface VideoSource {
-  type: 'iframe' | 'video';
+  type: 'webtor' | 'iframe' | 'video';
   url: string;
+  magnet?: string;
+  dataPath?: string;
+  rawSnippet?: string;
 }
 
 function parseVideoSource(rawUrl: string | undefined): VideoSource {
   if (!rawUrl || !rawUrl.trim()) {
     return {
-      type: 'video',
-      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+      type: 'iframe',
+      url: 'https://www.youtube-nocookie.com/embed/g3JUbg4v6gc?autoplay=0&rel=0&modestbranding=1'
     };
   }
 
   let str = rawUrl.trim();
 
+  // 0. Webtor / Magnet Video Embed detection (supports raw Webtor snippet or magnet URIs)
+  if (
+    str.includes('@webtor') ||
+    str.includes('magnet:?xt=') ||
+    (str.includes('<video') && (str.includes('magnet:') || str.includes('data-path')))
+  ) {
+    const magnetMatch = str.match(/src=["'](magnet:\?[^"']+)["']/i) || str.match(/(magnet:\?[^\s"'<>]+)/i);
+    const dataPathMatch = str.match(/data-path=["']([^"']+)["']/i);
+    const magnet = magnetMatch ? magnetMatch[1] : '';
+    const dataPath = dataPathMatch ? dataPathMatch[1] : '';
+
+    return {
+      type: 'webtor',
+      url: magnet || str,
+      magnet: magnet || str,
+      dataPath,
+      rawSnippet: str.includes('<video') ? str : undefined
+    };
+  }
+
   // 1. If user pasted an entire <iframe> code snippet like `<iframe src="https://..." ...></iframe>`
   const iframeSrcMatch = str.match(/src=["']([^"']+)["']/i);
   if (iframeSrcMatch && iframeSrcMatch[1]) {
     str = iframeSrcMatch[1];
+  }
+
+  // Upgrade http to https if applicable to prevent mixed content blocking in secure browsers
+  if (str.startsWith('http://') && !str.includes('localhost')) {
+    str = str.replace('http://', 'https://');
   }
 
   // 2. YouTube standard links, shorts or embed
@@ -126,9 +154,65 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
   trendingMovies
 }) => {
   const [downloadedQuality, setDownloadedQuality] = useState<string | null>(null);
+  const [playerKey, setPlayerKey] = useState<number>(0);
+  const [videoError, setVideoError] = useState<boolean>(false);
+  const [forceIframe, setForceIframe] = useState<boolean>(false);
 
-  // Parse video source (detects whether it is an iframe embed or direct HTML5 video)
+  // Parse video source (detects Webtor torrent embed, iframe embed or direct HTML5 video)
   const videoSource = useMemo(() => parseVideoSource(movie.videoSampleUrl), [movie.videoSampleUrl]);
+
+  // Build sandboxed HTML for Webtor live torrent player
+  const webtorSrcDoc = useMemo(() => {
+    if (videoSource.type !== 'webtor') return '';
+    const magnet = videoSource.magnet || '';
+    const dataPath = videoSource.dataPath || '';
+    
+    const bodyContent = videoSource.rawSnippet && videoSource.rawSnippet.includes('<video')
+      ? videoSource.rawSnippet
+      : `<video controls src="${magnet}" ${dataPath ? `data-path="${dataPath}"` : ''}></video><script src="https://cdn.jsdelivr.net/npm/@webtor/embed-sdk-js/dist/index.min.js" charset="utf-8" async></script>`;
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Torrent Stream</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    video, iframe {
+      width: 100% !important;
+      height: 100% !important;
+      border: 0 !important;
+      outline: none !important;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  ${bodyContent}
+</body>
+</html>`;
+  }, [videoSource]);
+
+  // Determine current player type
+  const activePlayerType = forceIframe ? 'iframe' : videoSource.type;
+
+  const handleReloadPlayer = () => {
+    setVideoError(false);
+    setPlayerKey(prev => prev + 1);
+  };
 
   // Combine standard 4K, 1080p, 720p, 480p and any extra custom download options
   const standardQualities = ['4K', '1080p', '720p', '480p'];
@@ -171,7 +255,7 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
         document.body.removeChild(link);
       } else {
         // 2. Generate and download real .torrent file directly to the user's computer/phone
-        const magnetUri = getMagnetLink(movie, q);
+        const magnetUri = customLink && customLink.startsWith('magnet:') ? customLink : getMagnetLink(movie, q);
         const fileName = `${safeTitle}.${movie.year || 2024}.${q.replace(/\s+/g, '_')}.Telugu.WEB-DL-Chitram.torrent`;
         
         const torrentContent = `d8:announce41:udp://tracker.opentrackr.org:1337/announce13:announce-listll41:udp://tracker.opentrackr.org:1337/announceel36:udp://open.tracker.cl:1337/announceel44:udp://tracker.openbittorrent.com:6969/announceee7:comment42:Downloaded from Chitram - High Speed Torrents10:created by14:Chitram WebDL13:creation datei${Math.floor(Date.now() / 1000)}e4:infod6:lengthi${q === '4K' ? 4080218931 : q === '1080p' ? 1932735283 : q === '720p' ? 943718400 : 471859200}e4:name${safeTitle.length}:${safeTitle}12:piece lengthi262144e6:pieces20:12345678901234567890ee`;
@@ -233,39 +317,113 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       
-      {/* Back Button - Just Back Icon */}
-      <div className="mb-4">
+      {/* Back Button & Stream Header Controls */}
+      <div className="mb-3 flex items-center justify-between gap-3">
         <button
           onClick={onBack}
           aria-label="Back"
           title="Back"
-          className="inline-flex items-center justify-center p-2 rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-300 hover:text-white hover:border-white transition-colors"
+          className="inline-flex items-center justify-center p-2 rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-300 hover:text-white hover:border-white transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4 stroke-[2.2]" />
         </button>
+
+        {/* Video Player Quick Actions */}
+        <div className="flex items-center gap-2 text-xs">
+          {videoSource.type === 'webtor' ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/80 border border-emerald-700/60 text-emerald-400 font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Webtor Live Torrent Stream</span>
+            </span>
+          ) : (
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>HD Stream</span>
+            </span>
+          )}
+
+          <button
+            onClick={handleReloadPlayer}
+            title="Reload Player"
+            className="p-1.5 sm:px-2.5 sm:py-1 rounded-md bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Reload</span>
+          </button>
+
+          <a
+            href={videoSource.type === 'webtor' ? (videoSource.magnet || videoSource.url) : videoSource.url}
+            target={videoSource.type === 'webtor' ? '_self' : '_blank'}
+            rel="noopener noreferrer"
+            title={videoSource.type === 'webtor' ? 'Open Magnet in uTorrent' : 'Open Stream in Full Tab'}
+            className="px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
+            <span>{videoSource.type === 'webtor' ? 'Open in uTorrent' : 'Open Stream ↗'}</span>
+          </a>
+        </div>
       </div>
 
-      {/* Main Video Streaming Player (Supports both Iframe Embed and Direct HTML5 Video) */}
-      <div className="w-full bg-black rounded-xl overflow-hidden border border-neutral-900 shadow-2xl mb-6">
+      {/* Main Video Streaming Player (Supports Webtor Torrent Embed, Iframe Embed, and Direct HTML5 Video) */}
+      <div className="w-full bg-black rounded-xl overflow-hidden border border-neutral-900 shadow-2xl mb-6 relative">
         <div className="relative aspect-video w-full bg-black flex items-center justify-center">
-          {videoSource.type === 'iframe' ? (
+          {videoSource.type === 'webtor' ? (
             <iframe
-              key={videoSource.url}
-              src={videoSource.url}
-              title={`${movie.title} Stream`}
-              className="w-full h-full border-0"
+              key={`webtor-${movie.id}-${playerKey}`}
+              srcDoc={webtorSrcDoc}
+              title={`${movie.title} Torrent Stream`}
+              className="w-full h-full border-0 absolute inset-0"
+              referrerPolicy="no-referrer"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
               allowFullScreen
-              loading="lazy"
             />
+          ) : activePlayerType === 'iframe' ? (
+            <iframe
+              key={`iframe-${videoSource.url}-${playerKey}`}
+              src={videoSource.url}
+              title={`${movie.title} Stream`}
+              className="w-full h-full border-0 absolute inset-0"
+              referrerPolicy="no-referrer"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+              allowFullScreen
+            />
+          ) : videoError ? (
+            <div className="flex flex-col items-center justify-center p-6 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-amber-400">
+                <Tv className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">Direct video stream could not be loaded</p>
+                <p className="text-xs text-neutral-400 mt-1">This video may require the Embed Server or an external player.</p>
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  onClick={() => setForceIframe(true)}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-bold text-xs hover:bg-emerald-400 transition-colors flex items-center gap-1.5"
+                >
+                  <Play className="w-3.5 h-3.5 fill-black" />
+                  <span>Switch to Embed Player</span>
+                </button>
+                <a
+                  href={videoSource.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 text-white text-xs hover:bg-neutral-800 transition-colors flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open Stream</span>
+                </a>
+              </div>
+            </div>
           ) : (
             <video
-              key={videoSource.url}
+              key={`video-${videoSource.url}-${playerKey}`}
               src={videoSource.url}
               controls
               playsInline
               poster={movie.backdropUrl || movie.posterUrl}
               className="w-full h-full object-contain"
+              onError={() => setVideoError(true)}
             >
               Your browser does not support the video tag.
             </video>

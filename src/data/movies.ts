@@ -8,6 +8,30 @@ export const MOVIE_ROWS: MovieRow[] = [
     tag: 'Trending',
     movies: [
       {
+        id: 'toxic-2026',
+        title: 'Toxic 2: A Fairy Tale for Grown-ups',
+        teluguTitle: 'టాక్సిక్ 2',
+        year: 2026,
+        genre: ['Action', 'Thriller', 'Crime'],
+        rating: 9.6,
+        duration: '2h 45m',
+        quality: '4K UHD',
+        posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=700&q=80',
+        backdropUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1400&q=80',
+        synopsis: 'A Fairy Tale for Grown-ups. Rocking Star Yash headlines an explosive action spectacle filled with underworld cartel wars, raw adrenaline, and cinematic brilliance.',
+        director: 'Geetu Mohandas',
+        cast: ['Yash', 'Kiara Advani', 'Nayanthara', 'Huma Qureshi'],
+        languages: ['English', 'Telugu', 'Hindi', 'Kannada'],
+        downloadSizes: { '4K': '3.2 GB', '1080p': '1.6 GB', '720p': '800 MB', '480p': '450 MB' },
+        downloadLinks: {
+          '4K': 'magnet:?xt=urn:btih:10ef1be973b00d73111c5285a70b0a0c4313b02c&dn=www.5MovieRulz.company+-+Toxic+%282026%29+Telugu+HDRip+-+x264+-+AAC+-+800MB+-+HC-ESub.mkv',
+          '1080p': 'magnet:?xt=urn:btih:10ef1be973b00d73111c5285a70b0a0c4313b02c&dn=www.5MovieRulz.company+-+Toxic+%282026%29+Telugu+HDRip+-+x264+-+AAC+-+800MB+-+HC-ESub.mkv',
+          '720p': 'magnet:?xt=urn:btih:10ef1be973b00d73111c5285a70b0a0c4313b02c&dn=www.5MovieRulz.company+-+Toxic+%282026%29+Telugu+HDRip+-+x264+-+AAC+-+800MB+-+HC-ESub.mkv',
+          '480p': 'magnet:?xt=urn:btih:10ef1be973b00d73111c5285a70b0a0c4313b02c&dn=www.5MovieRulz.company+-+Toxic+%282026%29+Telugu+HDRip+-+x264+-+AAC+-+800MB+-+HC-ESub.mkv'
+        },
+        videoSampleUrl: '<video controls src="magnet:?xt=urn:btih:10ef1be973b00d73111c5285a70b0a0c4313b02c&dn=www.5MovieRulz.company+-+Toxic+%282026%29+Telugu+HDRip+-+x264+-+AAC+-+800MB+-+HC-ESub.mkv" data-path="/www.5MovieRulz.company - Toxic (2026) Telugu HDRip - x264 - AAC - 800MB - HC-ESub.mkv"></video><script src="https://cdn.jsdelivr.net/npm/@webtor/embed-sdk-js/dist/index.min.js" charset="utf-8" async></script>'
+      },
+      {
         id: 'pushpa-2',
         title: 'Pushpa 2: The Rule',
         year: 2024,
@@ -22,7 +46,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Allu Arjun', 'Rashmika Mandanna', 'Fahadh Faasil'],
         languages: ['English', 'Telugu', 'Hindi'],
         downloadSizes: { '4K': '3.8 GB', '1080p': '1.8 GB', '720p': '900 MB', '480p': '450 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/g3JUbg4v6gc'
       },
       {
         id: 'devara-part-1',
@@ -39,7 +63,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['NTR Jr.', 'Janhvi Kapoor', 'Saif Ali Khan'],
         languages: ['English', 'Telugu', 'Hindi'],
         downloadSizes: { '4K': '3.6 GB', '1080p': '1.7 GB', '720p': '850 MB', '480p': '420 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/4yNuO2w8Jv8'
       },
       {
         id: 'kalki-2898-ad',
@@ -56,7 +80,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Prabhas', 'Amitabh Bachchan', 'Kamal Haasan'],
         languages: ['English', 'Telugu', 'Hindi'],
         downloadSizes: { '4K': '4.1 GB', '1080p': '2.0 GB', '720p': '950 MB', '480p': '480 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/kQDd1AhGIHk'
       },
       {
         id: 'salaar-ceasefire',
@@ -73,7 +97,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Prabhas', 'Prithviraj Sukumaran', 'Shruti Haasan'],
         languages: ['English', 'Telugu', 'Hindi'],
         downloadSizes: { '4K': '3.5 GB', '1080p': '1.6 GB', '720p': '800 MB', '480p': '400 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/bUR_FKt7Iso'
       },
       {
         id: 'rrr-epic',
@@ -90,7 +114,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['NTR Jr.', 'Ram Charan', 'Alia Bhatt'],
         languages: ['English', 'Telugu', 'Hindi'],
         downloadSizes: { '4K': '3.9 GB', '1080p': '1.9 GB', '720p': '890 MB', '480p': '440 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/g3JUbg4v6gc'
       }
     ]
   },
@@ -115,7 +139,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Nani', 'S. J. Suryah', 'Priyanka Mohan'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.3 GB', '1080p': '1.6 GB', '720p': '800 MB', '480p': '400 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/1L_wQ4Fk12E'
       },
       {
         id: 'lucky-baskhar',
@@ -132,7 +156,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Dulquer Salmaan', 'Meenakshi Chaudhary'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.1 GB', '1080p': '1.5 GB', '720p': '750 MB', '480p': '370 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/K8412sO-jD4'
       },
       {
         id: 'hanuman-epic',
@@ -149,7 +173,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Teja Sajja', 'Amritha Aiyer'],
         languages: ['English', 'Telugu', 'Hindi'],
         downloadSizes: { '4K': '3.4 GB', '1080p': '1.6 GB', '720p': '800 MB', '480p': '400 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/NgBoMJy386M'
       },
       {
         id: 'guntur-kaaram',
@@ -166,7 +190,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Mahesh Babu', 'Sreeleela'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.5 GB', '1080p': '1.7 GB', '720p': '810 MB', '480p': '410 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/dx_n_qLgWvM'
       },
       {
         id: 'tillu-square',
@@ -183,7 +207,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Siddhu Jonnalagadda', 'Anupama Parameswaran'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.6 GB', '1080p': '1.3 GB', '720p': '650 MB', '480p': '320 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/yUfQp6Wn5kQ'
       }
     ]
   },
@@ -208,7 +232,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Thalapathy Vijay', 'Sanjay Dutt', 'Trisha'],
         languages: ['English', 'Telugu', 'Tamil'],
         downloadSizes: { '4K': '3.7 GB', '1080p': '1.8 GB', '720p': '850 MB', '480p': '420 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/Oqvly3MvlXA'
       },
       {
         id: 'jailer-rajini',
@@ -225,7 +249,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Rajinikanth', 'Mohanlal', 'Vinayakan'],
         languages: ['English', 'Telugu', 'Tamil'],
         downloadSizes: { '4K': '3.6 GB', '1080p': '1.7 GB', '720p': '820 MB', '480p': '410 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/g3JUbg4v6gc'
       },
       {
         id: 'kgf-chapter-2',
@@ -242,7 +266,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Yash', 'Sanjay Dutt', 'Raveena Tandon'],
         languages: ['English', 'Telugu', 'Hindi'],
         downloadSizes: { '4K': '3.9 GB', '1080p': '1.9 GB', '720p': '900 MB', '480p': '450 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/4yNuO2w8Jv8'
       },
       {
         id: 'vikram-hitlist',
@@ -259,7 +283,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Kamal Haasan', 'Vijay Sethupathi', 'Fahadh Faasil'],
         languages: ['English', 'Telugu', 'Tamil'],
         downloadSizes: { '4K': '3.5 GB', '1080p': '1.7 GB', '720p': '810 MB', '480p': '400 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/bUR_FKt7Iso'
       },
       {
         id: 'animal-ranbir',
@@ -276,7 +300,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Ranbir Kapoor', 'Anil Kapoor', 'Bobby Deol'],
         languages: ['English', 'Telugu', 'Hindi'],
         downloadSizes: { '4K': '4.1 GB', '1080p': '2.0 GB', '720p': '950 MB', '480p': '470 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/kQDd1AhGIHk'
       }
     ]
   },
@@ -301,7 +325,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Prabhas', 'Rana Daggubati', 'Anushka Shetty'],
         languages: ['English', 'Telugu', 'Hindi'],
         downloadSizes: { '4K': '4.2 GB', '1080p': '2.1 GB', '720p': '1.0 GB', '480p': '500 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/g3JUbg4v6gc'
       },
       {
         id: 'interstellar-telugu',
@@ -318,7 +342,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Matthew McConaughey', 'Anne Hathaway'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '4.3 GB', '1080p': '2.2 GB', '720p': '1.0 GB', '480p': '490 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/4yNuO2w8Jv8'
       },
       {
         id: 'dune-part-two',
@@ -335,7 +359,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Timothée Chalamet', 'Zendaya'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.9 GB', '1080p': '1.9 GB', '720p': '920 MB', '480p': '460 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/bUR_FKt7Iso'
       },
       {
         id: 'avatar-way-of-water',
@@ -352,7 +376,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Sam Worthington', 'Zoe Saldana'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '4.5 GB', '1080p': '2.3 GB', '720p': '1.1 GB', '480p': '520 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/1L_wQ4Fk12E'
       },
       {
         id: 'surya-24-time-travel',
@@ -369,7 +393,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Suriya', 'Samantha', 'Nithya Menen'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.0 GB', '1080p': '1.5 GB', '720p': '720 MB', '480p': '360 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/kQDd1AhGIHk'
       }
     ]
   },
@@ -394,7 +418,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Dulquer Salmaan', 'Mrunal Thakur', 'Rashmika'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.2 GB', '1080p': '1.6 GB', '720p': '780 MB', '480p': '380 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/K8412sO-jD4'
       },
       {
         id: 'hi-nanna',
@@ -411,7 +435,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Nani', 'Mrunal Thakur', 'Baby Kiara'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.1 GB', '1080p': '1.5 GB', '720p': '750 MB', '480p': '370 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/NgBoMJy386M'
       },
       {
         id: 'ante-sundaraniki',
@@ -428,7 +452,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Nani', 'Nazriya Nazim'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.9 GB', '1080p': '1.4 GB', '720p': '700 MB', '480p': '340 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/dx_n_qLgWvM'
       },
       {
         id: 'geetha-govindam',
@@ -445,7 +469,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Vijay Deverakonda', 'Rashmika Mandanna'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.8 GB', '1080p': '1.4 GB', '720p': '680 MB', '480p': '330 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/yUfQp6Wn5kQ'
       },
       {
         id: 'bommarillu-classic',
@@ -462,7 +486,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Siddharth', 'Genelia', 'Prakash Raj'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.7 GB', '1080p': '1.3 GB', '720p': '650 MB', '480p': '320 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/Oqvly3MvlXA'
       }
     ]
   },
@@ -487,7 +511,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Adivi Sesh', 'Meenakshi Chaudhary'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.1 GB', '1080p': '1.5 GB', '720p': '740 MB', '480p': '360 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/g3JUbg4v6gc'
       },
       {
         id: 'drushyam-2',
@@ -504,7 +528,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Venkatesh', 'Meena'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.9 GB', '1080p': '1.4 GB', '720p': '700 MB', '480p': '340 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/4yNuO2w8Jv8'
       },
       {
         id: 'goodachari-spy',
@@ -521,7 +545,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Adivi Sesh', 'Sobhita Dhulipala'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.2 GB', '1080p': '1.6 GB', '720p': '760 MB', '480p': '370 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/bUR_FKt7Iso'
       },
       {
         id: 'evaru-regina',
@@ -538,7 +562,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Adivi Sesh', 'Regina Cassandra'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.8 GB', '1080p': '1.3 GB', '720p': '660 MB', '480p': '330 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/kQDd1AhGIHk'
       },
       {
         id: 'agent-sai-srinivasa',
@@ -555,7 +579,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Naveen Polishetty', 'Shruti Sharma'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.9 GB', '1080p': '1.4 GB', '720p': '680 MB', '480p': '340 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/1L_wQ4Fk12E'
       }
     ]
   },
@@ -580,7 +604,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Naveen Polishetty', 'Priyadarshi', 'Rahul Ramakrishna'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.7 GB', '1080p': '1.3 GB', '720p': '650 MB', '480p': '320 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/K8412sO-jD4'
       },
       {
         id: 'mathu-vadalara-2',
@@ -597,7 +621,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Sri Simha', 'Satya', 'Vennela Kishore'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.0 GB', '1080p': '1.5 GB', '720p': '720 MB', '480p': '350 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/NgBoMJy386M'
       },
       {
         id: 'f2-fun-frustration',
@@ -614,7 +638,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Venkatesh', 'Varun Tej', 'Tamannaah'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.8 GB', '1080p': '1.4 GB', '720p': '680 MB', '480p': '330 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/dx_n_qLgWvM'
       },
       {
         id: 'samajavaragamana',
@@ -631,7 +655,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Sree Vishnu', 'Reba Monica John'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.7 GB', '1080p': '1.3 GB', '720p': '660 MB', '480p': '320 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/yUfQp6Wn5kQ'
       },
       {
         id: 'brochevarevarura',
@@ -648,7 +672,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Sree Vishnu', 'Nivetha Thomas'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.6 GB', '1080p': '1.3 GB', '720p': '640 MB', '480p': '310 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/Oqvly3MvlXA'
       }
     ]
   },
@@ -673,7 +697,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Rishab Shetty', 'Sapthami Gowda'],
         languages: ['English', 'Telugu', 'Hindi'],
         downloadSizes: { '4K': '3.5 GB', '1080p': '1.7 GB', '720p': '810 MB', '480p': '400 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/g3JUbg4v6gc'
       },
       {
         id: 'manjummel-boys',
@@ -690,7 +714,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Soubin Shahir', 'Sreenath Bhasi'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.1 GB', '1080p': '1.5 GB', '720p': '760 MB', '480p': '370 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/4yNuO2w8Jv8'
       },
       {
         id: 'aavesham-faafa',
@@ -707,7 +731,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Fahadh Faasil', 'Hipzster'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.4 GB', '1080p': '1.6 GB', '720p': '800 MB', '480p': '390 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/bUR_FKt7Iso'
       },
       {
         id: 'charlie-777',
@@ -724,7 +748,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Rakshit Shetty', 'Sangeetha Sringeri'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.2 GB', '1080p': '1.5 GB', '720p': '740 MB', '480p': '360 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/kQDd1AhGIHk'
       },
       {
         id: 'captain-miller-dhanush',
@@ -741,7 +765,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Dhanush', 'Shiva Rajkumar'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.5 GB', '1080p': '1.7 GB', '720p': '820 MB', '480p': '410 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/1L_wQ4Fk12E'
       }
     ]
   },
@@ -766,7 +790,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Robert Downey Jr.', 'Chris Evans'],
         languages: ['English', 'Telugu', 'Hindi'],
         downloadSizes: { '4K': '4.8 GB', '1080p': '2.4 GB', '720p': '1.2 GB', '480p': '550 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/K8412sO-jD4'
       },
       {
         id: 'the-batman-pattinson',
@@ -783,7 +807,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Robert Pattinson', 'Zoë Kravitz'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '4.0 GB', '1080p': '2.0 GB', '720p': '950 MB', '480p': '460 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/NgBoMJy386M'
       },
       {
         id: 'oppenheimer-nolan',
@@ -800,7 +824,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Cillian Murphy', 'Emily Blunt'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '4.4 GB', '1080p': '2.2 GB', '720p': '1.1 GB', '480p': '510 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/dx_n_qLgWvM'
       },
       {
         id: 'spider-man-spider-verse',
@@ -817,7 +841,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Shameik Moore', 'Hailee Steinfeld'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.6 GB', '1080p': '1.8 GB', '720p': '850 MB', '480p': '410 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/yUfQp6Wn5kQ'
       },
       {
         id: 'mission-impossible-reckoning',
@@ -834,7 +858,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Tom Cruise', 'Hayley Atwell'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '4.1 GB', '1080p': '2.0 GB', '720p': '940 MB', '480p': '450 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/Oqvly3MvlXA'
       }
     ]
   },
@@ -859,7 +883,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Mahesh Babu', 'Ileana'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.4 GB', '1080p': '1.7 GB', '720p': '800 MB', '480p': '390 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/g3JUbg4v6gc'
       },
       {
         id: 'magadheera-rajamouli',
@@ -876,7 +900,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Ram Charan', 'Kajal Aggarwal'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.7 GB', '1080p': '1.8 GB', '720p': '860 MB', '480p': '420 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/4yNuO2w8Jv8'
       },
       {
         id: 'athadu-classic',
@@ -893,7 +917,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Mahesh Babu', 'Trisha'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.5 GB', '1080p': '1.7 GB', '720p': '820 MB', '480p': '400 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/bUR_FKt7Iso'
       },
       {
         id: 'siva-rgv-classic',
@@ -910,7 +934,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Nagarjuna', 'Amala'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '2.8 GB', '1080p': '1.4 GB', '720p': '670 MB', '480p': '330 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/kQDd1AhGIHk'
       },
       {
         id: 'jagadeka-veerudu',
@@ -927,7 +951,7 @@ export const MOVIE_ROWS: MovieRow[] = [
         cast: ['Chiranjeevi', 'Sridevi'],
         languages: ['English', 'Telugu'],
         downloadSizes: { '4K': '3.0 GB', '1080p': '1.5 GB', '720p': '700 MB', '480p': '340 MB' },
-        videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
+        videoSampleUrl: 'https://www.youtube.com/embed/1L_wQ4Fk12E'
       }
     ]
   }
@@ -976,7 +1000,15 @@ export const ALL_CATALOG_MOVIES = [
     cast: ['Superstar', 'Leading Actor', 'Acclaimed Co-star'],
     languages: ['English', 'Telugu', 'Hindi'],
     downloadSizes: { '4K': '3.8 GB', '1080p': '1.8 GB', '720p': '850 MB', '480p': '420 MB' },
-    videoSampleUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+    downloadLinks: title.toLowerCase().includes('toxic') ? {
+      '4K': 'magnet:?xt=urn:btih:10ef1be973b00d73111c5285a70b0a0c4313b02c&dn=www.5MovieRulz.company+-+Toxic+%282026%29+Telugu+HDRip+-+x264+-+AAC+-+800MB+-+HC-ESub.mkv',
+      '1080p': 'magnet:?xt=urn:btih:10ef1be973b00d73111c5285a70b0a0c4313b02c&dn=www.5MovieRulz.company+-+Toxic+%282026%29+Telugu+HDRip+-+x264+-+AAC+-+800MB+-+HC-ESub.mkv',
+      '720p': 'magnet:?xt=urn:btih:10ef1be973b00d73111c5285a70b0a0c4313b02c&dn=www.5MovieRulz.company+-+Toxic+%282026%29+Telugu+HDRip+-+x264+-+AAC+-+800MB+-+HC-ESub.mkv',
+      '480p': 'magnet:?xt=urn:btih:10ef1be973b00d73111c5285a70b0a0c4313b02c&dn=www.5MovieRulz.company+-+Toxic+%282026%29+Telugu+HDRip+-+x264+-+AAC+-+800MB+-+HC-ESub.mkv'
+    } : undefined,
+    videoSampleUrl: title.toLowerCase().includes('toxic')
+      ? '<video controls src="magnet:?xt=urn:btih:10ef1be973b00d73111c5285a70b0a0c4313b02c&dn=www.5MovieRulz.company+-+Toxic+%282026%29+Telugu+HDRip+-+x264+-+AAC+-+800MB+-+HC-ESub.mkv" data-path="/www.5MovieRulz.company - Toxic (2026) Telugu HDRip - x264 - AAC - 800MB - HC-ESub.mkv"></video><script src="https://cdn.jsdelivr.net/npm/@webtor/embed-sdk-js/dist/index.min.js" charset="utf-8" async></script>'
+      : 'https://www.youtube.com/embed/g3JUbg4v6gc'
   }))
 ];
 

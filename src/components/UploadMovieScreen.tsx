@@ -135,7 +135,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
       const defaultPoster = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=700&q=80';
       const finalPoster = posterUrl.trim() || defaultPoster;
       const finalBackdrop = backdropUrl.trim() || finalPoster;
-      const finalVideo = videoUrl.trim() || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4';
+      const finalVideo = videoUrl.trim() || 'https://www.youtube.com/embed/g3JUbg4v6gc';
 
       const downloadSizesMap: Record<string, string> = {
         '4K': size4K.trim() || '3.8 GB',

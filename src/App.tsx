@@ -50,7 +50,7 @@ export default function App() {
         synopsis: m.synopsis || '',
         posterUrl: m.posterUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=700&q=80',
         backdropUrl: m.backdropUrl || m.posterUrl || '',
-        videoSampleUrl: m.videoSampleUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+        videoSampleUrl: m.videoSampleUrl || 'https://www.youtube.com/embed/g3JUbg4v6gc',
         downloadSizes: m.downloadSizes || {
           '4K': '3.8 GB',
           '1080p': '1.8 GB',
@@ -58,6 +58,7 @@ export default function App() {
           '480p': '450 MB',
         },
         downloadLinks: m.downloadLinks || {},
+        extraDownloadOptions: Array.isArray(m.extraDownloadOptions) ? m.extraDownloadOptions : undefined,
         isCustom: true
       }));
     } catch (e) {
