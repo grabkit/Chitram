@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ArrowLeft, Star, Clock, Download, Check } from 'lucide-react';
 import { Movie, DownloadItem } from '../types';
 import { MovieCard } from './MovieCard';
@@ -9,6 +9,81 @@ interface MovieDetailScreenProps {
   onSelectMovie: (movie: Movie) => void;
   onAddDownload?: (item: DownloadItem) => void;
   trendingMovies: Movie[];
+}
+
+interface VideoSource {
+  type: 'iframe' | 'video';
+  url: string;
+}
+
+function parseVideoSource(rawUrl: string | undefined): VideoSource {
+  if (!rawUrl || !rawUrl.trim()) {
+    return {
+      type: 'video',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+    };
+  }
+
+  let str = rawUrl.trim();
+
+  // 1. If user pasted an entire <iframe> code snippet like `<iframe src="https://..." ...></iframe>`
+  const iframeSrcMatch = str.match(/src=["']([^"']+)["']/i);
+  if (iframeSrcMatch && iframeSrcMatch[1]) {
+    str = iframeSrcMatch[1];
+  }
+
+  // 2. YouTube standard links, shorts or embed
+  const ytWatchMatch = str.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+  if (ytWatchMatch && ytWatchMatch[1]) {
+    return {
+      type: 'iframe',
+      url: `https://www.youtube-nocookie.com/embed/${ytWatchMatch[1]}?autoplay=0&rel=0&modestbranding=1`
+    };
+  }
+
+  // 3. Google Drive preview link
+  if (str.includes('drive.google.com/file/d/')) {
+    const driveMatch = str.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (driveMatch && driveMatch[1]) {
+      return {
+        type: 'iframe',
+        url: `https://drive.google.com/file/d/${driveMatch[1]}/preview`
+      };
+    }
+  }
+
+  // 4. Vimeo link
+  const vimeoMatch = str.match(/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|)(\d+)/);
+  if (vimeoMatch && vimeoMatch[3]) {
+    return {
+      type: 'iframe',
+      url: `https://player.vimeo.com/video/${vimeoMatch[3]}`
+    };
+  }
+
+  // 5. Dailymotion link
+  const dmMatch = str.match(/dailymotion\.com\/(?:video|embed\/video)\/([a-zA-Z0-9]+)/);
+  if (dmMatch && dmMatch[1]) {
+    return {
+      type: 'iframe',
+      url: `https://www.dailymotion.com/embed/video/${dmMatch[1]}`
+    };
+  }
+
+  // 6. Direct video extensions (.mp4, .webm, .ogg, .m3u8, .mov, etc.)
+  const isDirectVideo = /\.(mp4|webm|ogg|m3u8|mov)(\?.*)?$/i.test(str);
+  if (isDirectVideo) {
+    return {
+      type: 'video',
+      url: str
+    };
+  }
+
+  // 7. Any generic embed URL or web streaming provider -> play in iframe!
+  return {
+    type: 'iframe',
+    url: str
+  };
 }
 
 function getMagnetLink(movie: Movie, quality: string): string {
@@ -51,6 +126,9 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
   trendingMovies
 }) => {
   const [downloadedQuality, setDownloadedQuality] = useState<string | null>(null);
+
+  // Parse video source (detects whether it is an iframe embed or direct HTML5 video)
+  const videoSource = useMemo(() => parseVideoSource(movie.videoSampleUrl), [movie.videoSampleUrl]);
 
   // Combine standard 4K, 1080p, 720p, 480p and any extra custom download options
   const standardQualities = ['4K', '1080p', '720p', '480p'];
@@ -167,19 +245,31 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
         </button>
       </div>
 
-      {/* Main Video Streaming Player */}
+      {/* Main Video Streaming Player (Supports both Iframe Embed and Direct HTML5 Video) */}
       <div className="w-full bg-black rounded-xl overflow-hidden border border-neutral-900 shadow-2xl mb-6">
-        <div className="relative aspect-video w-full bg-black">
-          <video
-            key={movie.id}
-            src={movie.videoSampleUrl}
-            controls
-            playsInline
-            poster={movie.backdropUrl || movie.posterUrl}
-            className="w-full h-full object-contain"
-          >
-            Your browser does not support the video tag.
-          </video>
+        <div className="relative aspect-video w-full bg-black flex items-center justify-center">
+          {videoSource.type === 'iframe' ? (
+            <iframe
+              key={videoSource.url}
+              src={videoSource.url}
+              title={`${movie.title} Stream`}
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+              allowFullScreen
+              loading="lazy"
+            />
+          ) : (
+            <video
+              key={videoSource.url}
+              src={videoSource.url}
+              controls
+              playsInline
+              poster={movie.backdropUrl || movie.posterUrl}
+              className="w-full h-full object-contain"
+            >
+              Your browser does not support the video tag.
+            </video>
+          )}
         </div>
       </div>
 

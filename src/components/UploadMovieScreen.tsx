@@ -462,18 +462,21 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               </p>
             </div>
 
-            {/* Stream Video URL */}
+            {/* Stream Video URL or Embed */}
             <div className="sm:col-span-2">
-              <label className="block text-neutral-400 font-semibold mb-1">
-                Video Stream URL (MP4 / WebM / HLS)
+              <label className="block text-neutral-300 font-bold mb-1">
+                Video Stream URL or Embed Link / &lt;iframe&gt; Code
               </label>
-              <input
-                type="url"
-                placeholder="https://... video stream url (leave blank for high quality sample)"
+              <textarea
+                rows={2}
+                placeholder="Paste video stream link, YouTube URL, Google Drive preview link, or <iframe src='...'></iframe> embed code"
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
+                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white font-mono text-xs resize-none"
               />
+              <p className="text-[11px] text-neutral-500 mt-1">
+                Supports: Video Embeds (YouTube, Google Drive, Streamwish, Filemoon, Dailymotion, Vimeo) or Direct MP4 files.
+              </p>
             </div>
 
           </div>
