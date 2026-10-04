@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ArrowLeft, Star, Clock, Download, Check, ExternalLink, RefreshCw, Play, Tv } from 'lucide-react';
 import { Movie, DownloadItem } from '../types';
 import { MovieCard } from './MovieCard';
+import { WebtorPlayer } from './WebtorPlayer';
 
 interface MovieDetailScreenProps {
   movie: Movie;
@@ -161,51 +162,6 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
   // Parse video source (detects Webtor torrent embed, iframe embed or direct HTML5 video)
   const videoSource = useMemo(() => parseVideoSource(movie.videoSampleUrl), [movie.videoSampleUrl]);
 
-  // Build sandboxed HTML for Webtor live torrent player
-  const webtorSrcDoc = useMemo(() => {
-    if (videoSource.type !== 'webtor') return '';
-    const magnet = videoSource.magnet || '';
-    const dataPath = videoSource.dataPath || '';
-    
-    const bodyContent = videoSource.rawSnippet && videoSource.rawSnippet.includes('<video')
-      ? videoSource.rawSnippet
-      : `<video controls src="${magnet}" ${dataPath ? `data-path="${dataPath}"` : ''}></video><script src="https://cdn.jsdelivr.net/npm/@webtor/embed-sdk-js/dist/index.min.js" charset="utf-8" async></script>`;
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Torrent Stream</title>
-  <style>
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #000;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    video, iframe {
-      width: 100% !important;
-      height: 100% !important;
-      border: 0 !important;
-      outline: none !important;
-      display: block;
-    }
-  </style>
-</head>
-<body>
-  ${bodyContent}
-</body>
-</html>`;
-  }, [videoSource]);
-
   // Determine current player type
   const activePlayerType = forceIframe ? 'iframe' : videoSource.type;
 
@@ -314,6 +270,9 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
   const movieLanguages = Array.isArray(movie.languages) ? movie.languages.join(', ') : 'Telugu';
   const movieCast = Array.isArray(movie.cast) ? movie.cast.join(', ') : 'Cast';
 
+  const magnetUrl = videoSource.magnet || videoSource.url;
+  const webtorWebUrl = `https://webtor.io/#/show?magnet=${encodeURIComponent(magnetUrl)}`;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       
@@ -351,31 +310,54 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
             <span className="hidden sm:inline">Reload</span>
           </button>
 
-          <a
-            href={videoSource.type === 'webtor' ? (videoSource.magnet || videoSource.url) : videoSource.url}
-            target={videoSource.type === 'webtor' ? '_self' : '_blank'}
-            rel="noopener noreferrer"
-            title={videoSource.type === 'webtor' ? 'Open Magnet in uTorrent' : 'Open Stream in Full Tab'}
-            className="px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
-            <span>{videoSource.type === 'webtor' ? 'Open in uTorrent' : 'Open Stream ↗'}</span>
-          </a>
+          {videoSource.type === 'webtor' ? (
+            <>
+              <a
+                href={webtorWebUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open in Dedicated Mobile Fullscreen Tab"
+                className="px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-700 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500 transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Web Player ↗</span>
+              </a>
+              <a
+                href={magnetUrl}
+                target="_self"
+                rel="noopener noreferrer"
+                title="Launch Magnet in uTorrent"
+                className="hidden sm:flex px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white transition-colors items-center gap-1.5 cursor-pointer"
+              >
+                <span>uTorrent</span>
+              </a>
+            </>
+          ) : (
+            <a
+              href={videoSource.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open Stream in Full Tab"
+              className="px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Open Stream ↗</span>
+            </a>
+          )}
         </div>
       </div>
 
-      {/* Main Video Streaming Player (Supports Webtor Torrent Embed, Iframe Embed, and Direct HTML5 Video) */}
+      {/* Main Video Streaming Player (Supports Webtor Native SDK, Iframe Embed, and Direct HTML5 Video) */}
       <div className="w-full bg-black rounded-xl overflow-hidden border border-neutral-900 shadow-2xl mb-6 relative">
         <div className="relative aspect-video w-full bg-black flex items-center justify-center">
           {videoSource.type === 'webtor' ? (
-            <iframe
+            <WebtorPlayer
               key={`webtor-${movie.id}-${playerKey}`}
-              srcDoc={webtorSrcDoc}
-              title={`${movie.title} Torrent Stream`}
-              className="w-full h-full border-0 absolute inset-0"
-              referrerPolicy="no-referrer"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-              allowFullScreen
+              magnet={videoSource.magnet || videoSource.url}
+              dataPath={videoSource.dataPath}
+              poster={movie.backdropUrl || movie.posterUrl}
+              title={movie.title}
+              onReload={handleReloadPlayer}
             />
           ) : activePlayerType === 'iframe' ? (
             <iframe
