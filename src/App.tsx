@@ -60,7 +60,8 @@ export default function App() {
         downloadLinks: m.downloadLinks || {},
         downloadOptions: Array.isArray(m.downloadOptions) ? m.downloadOptions : undefined,
         extraDownloadOptions: Array.isArray(m.extraDownloadOptions) ? m.extraDownloadOptions : undefined,
-        isCustom: true
+        isCustom: true,
+        createdAt: Number(m.createdAt) || (typeof m.id === 'string' && m.id.match(/movie-(\d+)/) ? Number(m.id.match(/movie-(\d+)/)[1]) : 0)
       }));
     } catch (e) {
       console.warn('Error reading custom movies from storage:', e instanceof Error ? e.message : String(e));
@@ -85,26 +86,40 @@ export default function App() {
   }, [customMovies]);
 
   // Combined full catalog: Cloud Firestore movies + Local published cache + Default catalog
+  // CRITICAL: Uploaded movies are strictly sorted so LATEST VIDEO IS ALWAYS AT THE VERY TOP
   const allMovies = useMemo(() => {
-    const cloudMap = new Map<string, Movie>();
-    cloudMovies.forEach(m => cloudMap.set(m.id, m));
-    
-    const mergedCustom = customMovies.map(local => {
-      const cloud = cloudMap.get(local.id);
-      if (cloud) {
-        cloudMap.delete(local.id);
-        return {
-          ...local,
-          ...cloud,
-          downloadOptions: (cloud.downloadOptions && cloud.downloadOptions.length > 0) ? cloud.downloadOptions : local.downloadOptions,
-          downloadLinks: { ...local.downloadLinks, ...cloud.downloadLinks }
-        };
+    const moviesMap = new Map<string, Movie>();
+
+    // 1. Add local custom movies
+    customMovies.forEach(m => moviesMap.set(m.id, m));
+
+    // 2. Merge with cloud movies (preserving downloadOptions and updating)
+    cloudMovies.forEach(m => {
+      const existing = moviesMap.get(m.id);
+      if (existing) {
+        moviesMap.set(m.id, {
+          ...existing,
+          ...m,
+          createdAt: m.createdAt || existing.createdAt || 0,
+          downloadOptions: (m.downloadOptions && m.downloadOptions.length > 0) ? m.downloadOptions : existing.downloadOptions,
+          downloadLinks: { ...existing.downloadLinks, ...m.downloadLinks }
+        });
+      } else {
+        moviesMap.set(m.id, m);
       }
-      return local;
     });
 
-    const remainingCloud = Array.from(cloudMap.values());
-    return [...mergedCustom, ...remainingCloud, ...ALL_CATALOG_MOVIES];
+    const userUploadedMovies = Array.from(moviesMap.values());
+
+    // 3. Sort user uploaded movies with LATEST FIRST (highest timestamp at index 0)
+    userUploadedMovies.sort((a, b) => {
+      const timeA = Number(a.createdAt) || (typeof a.id === 'string' && a.id.match(/movie-(\d+)/) ? Number(a.id.match(/movie-(\d+)/)![1]) : 0);
+      const timeB = Number(b.createdAt) || (typeof b.id === 'string' && b.id.match(/movie-(\d+)/) ? Number(b.id.match(/movie-(\d+)/)![1]) : 0);
+      return timeB - timeA;
+    });
+
+    // Latest user-uploaded movies appear at the very TOP of the catalog, followed by defaults
+    return [...userUploadedMovies, ...ALL_CATALOG_MOVIES];
   }, [cloudMovies, customMovies]);
 
   // Downloads persistence (safe parsing & saving)
@@ -229,7 +244,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Combined creator list of movies
+  // Combined creator list of movies (sorted latest first)
   const creatorMoviesList = useMemo(() => {
     const map = new Map<string, Movie>();
     customMovies.forEach(m => map.set(m.id, m));
@@ -239,6 +254,7 @@ export default function App() {
         map.set(m.id, {
           ...existing,
           ...m,
+          createdAt: m.createdAt || existing.createdAt || 0,
           downloadOptions: (m.downloadOptions && m.downloadOptions.length > 0) ? m.downloadOptions : existing.downloadOptions,
           downloadLinks: { ...existing.downloadLinks, ...m.downloadLinks }
         });
@@ -246,7 +262,13 @@ export default function App() {
         map.set(m.id, m);
       }
     });
-    return Array.from(map.values());
+    const list = Array.from(map.values());
+    list.sort((a, b) => {
+      const timeA = Number(a.createdAt) || (typeof a.id === 'string' && a.id.match(/movie-(\d+)/) ? Number(a.id.match(/movie-(\d+)/)![1]) : 0);
+      const timeB = Number(b.createdAt) || (typeof b.id === 'string' && b.id.match(/movie-(\d+)/) ? Number(b.id.match(/movie-(\d+)/)![1]) : 0);
+      return timeB - timeA;
+    });
+    return list;
   }, [cloudMovies, customMovies]);
 
   return (
@@ -256,8 +278,6 @@ export default function App() {
       <Navbar
         searchQuery={searchQuery}
         setSearchQuery={handleSearchChange}
-        downloadsCount={downloads.length}
-        onOpenDownloads={() => setIsDownloadsOpen(true)}
         onHomeClick={handleBackToCatalog}
         onOpenUpload={handleOpenUpload}
       />

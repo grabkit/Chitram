@@ -27,6 +27,7 @@ export interface Movie {
   videoSampleUrl: string;
   trailerTitle?: string;
   isCustom?: boolean;
+  createdAt?: number;
 }
 
 export interface MovieRow {

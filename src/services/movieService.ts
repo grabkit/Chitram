@@ -37,6 +37,13 @@ export function subscribeToGlobalMovies(
               }));
             }
 
+            // Extract accurate timestamp (from data.createdAt or document ID timestamp)
+            let timestamp = Number(data.createdAt);
+            if (!timestamp || isNaN(timestamp)) {
+              const match = docSnap.id.match(/movie-(\d+)/);
+              timestamp = match && match[1] ? Number(match[1]) : 0;
+            }
+
             fetchedMovies.push({
               id: docSnap.id,
               title: data.title || 'Untitled',
@@ -61,13 +68,14 @@ export function subscribeToGlobalMovies(
               downloadLinks: rawDownloadLinks,
               downloadOptions: options,
               extraDownloadOptions: Array.isArray(data.extraDownloadOptions) ? data.extraDownloadOptions : undefined,
-              isCustom: true
+              isCustom: true,
+              createdAt: timestamp
             });
           }
         });
 
-        // Client-side sorting by creation time (most recent first)
-        fetchedMovies.sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
+        // Client-side sorting by creation time: LATEST FIRST (descending)
+        fetchedMovies.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
         
         onMoviesChange(fetchedMovies);
         onStatusChange?.({ connected: true });
@@ -150,7 +158,7 @@ export async function publishMovieToFirestore(movie: Movie): Promise<void> {
     downloadLinks: cleanLinks,
     downloadOptions: cleanOptions,
     extraDownloadOptions: Array.isArray(movie.extraDownloadOptions) ? movie.extraDownloadOptions : [],
-    createdAt: Date.now()
+    createdAt: Number(movie.createdAt) || Date.now()
   };
 
   try {

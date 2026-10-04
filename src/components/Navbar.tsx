@@ -1,11 +1,9 @@
 import React from 'react';
-import { Search, Download, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 interface NavbarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  downloadsCount: number;
-  onOpenDownloads: () => void;
   onHomeClick?: () => void;
   onOpenUpload?: () => void;
 }
@@ -13,8 +11,6 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   searchQuery,
   setSearchQuery,
-  downloadsCount,
-  onOpenDownloads,
   onHomeClick,
   onOpenUpload
 }) => {
@@ -36,6 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
     setSearchQuery(val);
   };
+
   return (
     <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-neutral-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -59,10 +56,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
-          {/* Simple Search and Downloads Button */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Search Input */}
-            <div className="flex items-center bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1 sm:py-1.5 w-32 sm:w-56 focus-within:border-white transition-colors">
+          {/* Search Bar on Right */}
+          <div className="flex items-center">
+            <div className="flex items-center bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1 sm:py-1.5 w-44 sm:w-64 focus-within:border-white transition-colors">
               <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5 shrink-0" />
               <input
                 type="text"
@@ -78,21 +74,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               )}
             </div>
-
-            {/* Simple Downloads Button */}
-            <button
-              onClick={onOpenDownloads}
-              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 hover:border-white text-white flex items-center gap-1.5 text-xs font-semibold transition-colors"
-              title="Downloads"
-            >
-              <Download className="w-3.5 h-3.5 text-white" />
-              <span className="hidden sm:inline">Downloads</span>
-              {downloadsCount > 0 && (
-                <span className="bg-white text-black px-1.5 py-0.2 rounded-full text-[8px] font-black">
-                  {downloadsCount}
-                </span>
-              )}
-            </button>
           </div>
 
         </div>

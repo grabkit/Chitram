@@ -234,7 +234,10 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
         downloadSizes: downloadSizesMap,
         downloadLinks: downloadLinksMap,
         downloadOptions: validOptions,
-        isCustom: true
+        isCustom: true,
+        createdAt: editingMovieId
+          ? (customMovies.find(m => m.id === editingMovieId)?.createdAt || Date.now())
+          : Date.now()
       };
 
       await onPublishMovie(newMovie);
