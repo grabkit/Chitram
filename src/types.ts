@@ -22,6 +22,7 @@ export interface Movie {
   languages: string[];
   downloadSizes: Record<string, string>;
   downloadLinks?: Record<string, string | undefined>;
+  downloadOptions?: DownloadOption[];
   extraDownloadOptions?: DownloadOption[];
   videoSampleUrl: string;
   trailerTitle?: string;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Upload, Film, Link as LinkIcon, Check, Image as ImageIcon, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, Upload, Film, Link as LinkIcon, Check, Image as ImageIcon, Trash2, Plus, Edit3, X } from 'lucide-react';
 import { Movie, DownloadOption } from '../types';
 
 interface UploadMovieScreenProps {
@@ -9,19 +9,14 @@ interface UploadMovieScreenProps {
   onDeleteCustomMovie: (id: string) => void;
 }
 
-interface ExtraLinkField {
-  id: string;
-  quality: string;
-  size: string;
-  url: string;
-}
-
 export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
   onBack,
   onPublishMovie,
   customMovies,
   onDeleteCustomMovie
 }) => {
+  const [editingMovieId, setEditingMovieId] = useState<string | null>(null);
+
   const [title, setTitle] = useState('');
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [rating, setRating] = useState<number>(9.0);
@@ -38,42 +33,99 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
   const [backdropUrl, setBackdropUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
 
-  // Download Sizes & Links (Default 4)
-  const [size4K, setSize4K] = useState('3.8 GB');
-  const [link4K, setLink4K] = useState('');
-  const [size1080p, setSize1080p] = useState('1.8 GB');
-  const [link1080p, setLink1080p] = useState('');
-  const [size720p, setSize720p] = useState('900 MB');
-  const [link720p, setLink720p] = useState('');
-  const [size480p, setSize480p] = useState('450 MB');
-  const [link480p, setLink480p] = useState('');
+  // Dynamic Download Options (Full freedom: custom quality, custom size, add and remove options)
+  const [downloadOptions, setDownloadOptions] = useState<DownloadOption[]>([
+    { id: 'opt-4k', quality: '4K Ultra HD', size: '3.8 GB', url: '' },
+    { id: 'opt-1080p', quality: '1080p Full HD', size: '1.8 GB', url: '' },
+    { id: 'opt-720p', quality: '720p HD', size: '900 MB', url: '' },
+    { id: 'opt-480p', quality: '480p SD', size: '450 MB', url: '' }
+  ]);
 
-  // Dynamic Extra Links (Unlimited)
-  const [extraLinks, setExtraLinks] = useState<ExtraLinkField[]>([]);
-
-  const handleAddExtraLink = () => {
-    setExtraLinks(prev => [
+  const handleAddOption = (preset?: { quality: string; size: string }) => {
+    setDownloadOptions(prev => [
       ...prev,
       {
-        id: `extra-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        quality: '',
-        size: '1.5 GB',
+        id: `opt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        quality: preset?.quality || '',
+        size: preset?.size || '1.5 GB',
         url: ''
       }
     ]);
   };
 
-  const handleRemoveExtraLink = (id: string) => {
-    setExtraLinks(prev => prev.filter(l => l.id !== id));
+  const handleRemoveOption = (id: string) => {
+    setDownloadOptions(prev => prev.filter(opt => opt.id !== id));
   };
 
-  const handleUpdateExtraLink = (id: string, field: 'quality' | 'size' | 'url', value: string) => {
-    setExtraLinks(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
+  const handleUpdateOption = (id: string, field: 'quality' | 'size' | 'url', value: string) => {
+    setDownloadOptions(prev => prev.map(opt => opt.id === id ? { ...opt, [field]: value } : opt));
   };
 
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedSuccess, setPublishedSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Load existing custom movie into form for editing
+  const handleEditMovie = (m: Movie) => {
+    setEditingMovieId(m.id);
+    setTitle(m.title || '');
+    setYear(m.year || new Date().getFullYear());
+    setRating(m.rating || 9.0);
+    setDuration(m.duration || '2h 30m');
+    setQuality(m.quality || '4K UHD');
+    setGenres(Array.isArray(m.genre) ? m.genre.join(', ') : 'Action');
+    setDirector(m.director || '');
+    setCast(Array.isArray(m.cast) ? m.cast.join(', ') : '');
+    setLanguages(Array.isArray(m.languages) ? m.languages.join(', ') : 'Telugu');
+    setSynopsis(m.synopsis || '');
+    setPosterUrl(m.posterUrl || '');
+    setBackdropUrl(m.backdropUrl || '');
+    setVideoUrl(m.videoSampleUrl || '');
+
+    if (m.downloadOptions && m.downloadOptions.length > 0) {
+      setDownloadOptions(m.downloadOptions.map(opt => ({ ...opt })));
+    } else {
+      // Build from downloadSizes & extraDownloadOptions
+      const opts: DownloadOption[] = [];
+      const stdQuals = ['4K', '1080p', '720p', '480p'];
+      stdQuals.forEach(q => {
+        if (m.downloadSizes?.[q]) {
+          opts.push({
+            id: `opt-${q.toLowerCase()}`,
+            quality: q === '4K' ? '4K Ultra HD' : q === '1080p' ? '1080p Full HD' : q === '720p' ? '720p HD' : '480p SD',
+            size: m.downloadSizes[q],
+            url: m.downloadLinks?.[q] || ''
+          });
+        }
+      });
+      if (m.extraDownloadOptions && m.extraDownloadOptions.length > 0) {
+        opts.push(...m.extraDownloadOptions);
+      }
+      setDownloadOptions(opts.length > 0 ? opts : [
+        { id: 'opt-4k', quality: '4K Ultra HD', size: '3.8 GB', url: '' },
+        { id: 'opt-1080p', quality: '1080p Full HD', size: '1.8 GB', url: '' }
+      ]);
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMovieId(null);
+    setTitle('');
+    setDirector('');
+    setCast('');
+    setSynopsis('');
+    setPosterUrl('');
+    setBackdropUrl('');
+    setVideoUrl('');
+    setDownloadOptions([
+      { id: 'opt-4k', quality: '4K Ultra HD', size: '3.8 GB', url: '' },
+      { id: 'opt-1080p', quality: '1080p Full HD', size: '1.8 GB', url: '' },
+      { id: 'opt-720p', quality: '720p HD', size: '900 MB', url: '' },
+      { id: 'opt-480p', quality: '480p SD', size: '450 MB', url: '' }
+    ]);
+  };
 
   // File Upload Handlers (auto-compresses local files to ~40KB Data URLs to fit perfectly in Firestore and LocalStorage)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, target: 'poster' | 'backdrop') => {
@@ -137,37 +189,30 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
       const finalBackdrop = backdropUrl.trim() || finalPoster;
       const finalVideo = videoUrl.trim() || 'https://www.youtube.com/embed/g3JUbg4v6gc';
 
-      const downloadSizesMap: Record<string, string> = {
-        '4K': size4K.trim() || '3.8 GB',
-        '1080p': size1080p.trim() || '1.8 GB',
-        '720p': size720p.trim() || '900 MB',
-        '480p': size480p.trim() || '450 MB',
-      };
-      const downloadLinksMap: Record<string, string | undefined> = {
-        '4K': link4K.trim() || undefined,
-        '1080p': link1080p.trim() || undefined,
-        '720p': link720p.trim() || undefined,
-        '480p': link480p.trim() || undefined,
-      };
-
-      const validExtraOptions: DownloadOption[] = extraLinks
-        .filter(l => l.quality.trim().length > 0)
-        .map(l => ({
-          id: l.id,
-          quality: l.quality.trim(),
-          size: l.size.trim() || '1.5 GB',
-          url: l.url.trim() || undefined
+      // Filter valid download options
+      const validOptions = downloadOptions
+        .filter(opt => opt.quality.trim().length > 0)
+        .map(opt => ({
+          id: opt.id,
+          quality: opt.quality.trim(),
+          size: opt.size.trim() || '1.5 GB',
+          url: opt.url?.trim() || undefined
         }));
 
-      validExtraOptions.forEach(opt => {
+      // Build compatibility maps
+      const downloadSizesMap: Record<string, string> = {};
+      const downloadLinksMap: Record<string, string | undefined> = {};
+      validOptions.forEach(opt => {
         downloadSizesMap[opt.quality] = opt.size;
         if (opt.url) {
           downloadLinksMap[opt.quality] = opt.url;
         }
       });
 
+      const movieId = editingMovieId || `movie-${Date.now()}-${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+
       const newMovie: Movie = {
-        id: `movie-${Date.now()}-${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+        id: movieId,
         title: title.trim(),
         year: Number(year) || new Date().getFullYear(),
         rating: Number(rating) || 8.5,
@@ -183,12 +228,13 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
         videoSampleUrl: finalVideo,
         downloadSizes: downloadSizesMap,
         downloadLinks: downloadLinksMap,
-        extraDownloadOptions: validExtraOptions.length > 0 ? validExtraOptions : undefined,
+        downloadOptions: validOptions,
         isCustom: true
       };
 
       await onPublishMovie(newMovie);
       setPublishedSuccess(true);
+      setEditingMovieId(null);
 
       // Reset Form
       setTitle('');
@@ -198,11 +244,12 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
       setPosterUrl('');
       setBackdropUrl('');
       setVideoUrl('');
-      setLink4K('');
-      setLink1080p('');
-      setLink720p('');
-      setLink480p('');
-      setExtraLinks([]);
+      setDownloadOptions([
+        { id: 'opt-4k', quality: '4K Ultra HD', size: '3.8 GB', url: '' },
+        { id: 'opt-1080p', quality: '1080p Full HD', size: '1.8 GB', url: '' },
+        { id: 'opt-720p', quality: '720p HD', size: '900 MB', url: '' },
+        { id: 'opt-480p', quality: '480p SD', size: '450 MB', url: '' }
+      ]);
 
       setTimeout(() => {
         setPublishedSuccess(false);
@@ -225,7 +272,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
             onClick={onBack}
             aria-label="Back"
             title="Back"
-            className="inline-flex items-center justify-center p-2 rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-300 hover:text-white hover:border-white transition-colors"
+            className="inline-flex items-center justify-center p-2 rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-300 hover:text-white hover:border-white transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 stroke-[2.2]" />
           </button>
@@ -236,62 +283,72 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
             <div className="flex items-center gap-2 mt-0.5">
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <p className="text-xs text-neutral-400">
-                Global Cloud Sync Active • Prems@3738
+                Global Cloud Sync Active
               </p>
             </div>
           </div>
         </div>
 
-        <button
-          onClick={onBack}
-          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white"
-        >
-          Done
-        </button>
+        {editingMovieId && (
+          <button
+            onClick={handleCancelEdit}
+            className="px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 hover:border-white text-xs text-neutral-300 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+            <span>Cancel Edit</span>
+          </button>
+        )}
       </div>
 
-      {publishedSuccess && (
-        <div className="mb-6 p-4 rounded-xl bg-neutral-950 border border-emerald-500/50 text-white flex items-center justify-between">
-          <div className="flex items-center gap-2.5 text-xs sm:text-sm font-bold">
-            <Check className="w-4 h-4 text-emerald-400" />
-            <span>Movie successfully published to Global Cloud! It is now live across all devices worldwide.</span>
+      {editingMovieId && (
+        <div className="mb-6 p-3.5 rounded-xl bg-amber-950/40 border border-amber-800/60 flex items-center justify-between gap-3 text-xs text-amber-200">
+          <div className="flex items-center gap-2">
+            <Edit3 className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Editing Movie: <strong className="text-white">{title || 'Selected Movie'}</strong>. Make your changes and click Update below.</span>
           </div>
           <button
-            onClick={onBack}
-            className="text-xs underline text-white hover:text-neutral-300 font-bold ml-2 shrink-0"
+            onClick={handleCancelEdit}
+            className="text-amber-400 underline hover:text-amber-200 shrink-0"
           >
-            View on Trending
+            Reset Form
           </button>
         </div>
       )}
 
+      {/* Notifications */}
+      {publishedSuccess && (
+        <div className="mb-6 p-4 rounded-xl bg-emerald-950/80 border border-emerald-500/50 flex items-center gap-3 text-emerald-300 text-xs font-semibold animate-in fade-in">
+          <Check className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span>
+            {editingMovieId ? 'Movie updated successfully in Trending catalog!' : 'Movie published successfully to Global Cloud! Visible in Trending catalog immediately.'}
+          </span>
+        </div>
+      )}
+
       {errorMsg && (
-        <div className="mb-6 p-3 rounded-lg bg-neutral-950 border border-neutral-700 text-neutral-200 text-xs font-semibold">
+        <div className="mb-6 p-4 rounded-xl bg-red-950/60 border border-red-500/50 text-red-300 text-xs font-medium">
           {errorMsg}
         </div>
       )}
 
-      {/* Upload Form */}
+      {/* Main Upload / Edit Form */}
       <form onSubmit={handlePublish} className="space-y-6">
         
-        {/* Section 1: Basic Information */}
+        {/* Section 1: Basic Metadata */}
         <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-4 sm:p-6 space-y-4">
           <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
             <Film className="w-4 h-4 text-white" />
-            1. Movie Details
+            1. Movie Information
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            
             {/* Title */}
             <div className="sm:col-span-2">
-              <label className="block text-neutral-400 font-semibold mb-1">
-                Movie Title <span className="text-white">*</span>
-              </label>
+              <label className="block text-neutral-400 font-semibold mb-1">Movie Title *</label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Salaar 2: Shouryaanga Parvam"
+                placeholder="e.g. Salaar: Part 1 – Ceasefire"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
@@ -303,6 +360,8 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               <label className="block text-neutral-400 font-semibold mb-1">Release Year</label>
               <input
                 type="number"
+                min="1950"
+                max="2035"
                 value={year}
                 onChange={(e) => setYear(Number(e.target.value))}
                 className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white"
@@ -311,7 +370,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
 
             {/* Rating */}
             <div>
-              <label className="block text-neutral-400 font-semibold mb-1">Rating (out of 10)</label>
+              <label className="block text-neutral-400 font-semibold mb-1">IMDb Rating (e.g. 8.6)</label>
               <input
                 type="number"
                 step="0.1"
@@ -328,16 +387,16 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               <label className="block text-neutral-400 font-semibold mb-1">Duration</label>
               <input
                 type="text"
-                placeholder="e.g. 2h 55m"
+                placeholder="2h 45m"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
               />
             </div>
 
-            {/* Quality */}
+            {/* Quality Badge */}
             <div>
-              <label className="block text-neutral-400 font-semibold mb-1">Quality Badge</label>
+              <label className="block text-neutral-400 font-semibold mb-1">Header Quality Badge</label>
               <select
                 value={quality}
                 onChange={(e) => setQuality(e.target.value as any)}
@@ -350,10 +409,8 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
             </div>
 
             {/* Genres */}
-            <div className="sm:col-span-2">
-              <label className="block text-neutral-400 font-semibold mb-1">
-                Genres (comma separated)
-              </label>
+            <div>
+              <label className="block text-neutral-400 font-semibold mb-1">Genres (comma separated)</label>
               <input
                 type="text"
                 placeholder="Action, Thriller, Drama"
@@ -375,12 +432,12 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               />
             </div>
 
-            {/* Audio Languages */}
-            <div>
+            {/* Languages */}
+            <div className="sm:col-span-2">
               <label className="block text-neutral-400 font-semibold mb-1">Languages (comma separated)</label>
               <input
                 type="text"
-                placeholder="Telugu, Hindi, English"
+                placeholder="Telugu, Hindi, Tamil, Malayalam"
                 value={languages}
                 onChange={(e) => setLanguages(e.target.value)}
                 className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
@@ -426,7 +483,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
             {/* Poster URL or File */}
             <div>
               <label className="block text-neutral-400 font-semibold mb-1">
-                Poster Image URL (or upload below)
+                Poster Image URL (or upload file)
               </label>
               <input
                 type="url"
@@ -465,207 +522,183 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
             {/* Stream Video URL or Embed */}
             <div className="sm:col-span-2">
               <label className="block text-neutral-300 font-bold mb-1">
-                Video Stream URL or Embed Link / &lt;iframe&gt; Code
+                Video Stream URL or Embed Link / &lt;iframe&gt; / Webtor Snippet
               </label>
               <textarea
                 rows={2}
-                placeholder="Paste video stream link, YouTube URL, Google Drive preview link, or <iframe src='...'></iframe> embed code"
+                placeholder="Paste video stream link, Webtor magnet code snippet, YouTube URL, Google Drive preview link, or <iframe src='...'></iframe>"
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
                 className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white font-mono text-xs resize-none"
               />
               <p className="text-[11px] text-neutral-500 mt-1">
-                Supports: Video Embeds (YouTube, Google Drive, Streamwish, Filemoon, Dailymotion, Vimeo) or Direct MP4 files.
+                Supports: Webtor &lt;video&gt; code snippets, Magnet Links, YouTube, Google Drive, Streamwish, Filemoon, Dailymotion, Vimeo, or Direct MP4 files.
               </p>
             </div>
 
           </div>
         </div>
 
-        {/* Section 3: Download Links & Sizes */}
+        {/* Section 3: Fully Customizable Download Options (Edit Quality, File Size, Add & Remove) */}
         <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-4 sm:p-6 space-y-4">
-          <div>
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <LinkIcon className="w-4 h-4 text-white" />
-              3. Movie Download Links & File Sizes (uTorrent Ready)
-            </h2>
-            <p className="text-[11px] text-neutral-400 mt-1">
-              You can paste custom uTorrent Magnet URIs (<code className="text-neutral-300">magnet:?xt=urn:...</code>) or direct torrent links. (If left blank, an auto-configured high-speed magnet link will be generated).
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <LinkIcon className="w-4 h-4 text-white" />
+                <span>3. Download Options ({downloadOptions.length})</span>
+              </h2>
+              <p className="text-[11px] text-neutral-400 mt-0.5">
+                Customize quality names, file sizes, and download links. Add or remove options as needed.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleAddOption()}
+              className="self-start sm:self-auto px-3.5 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Add Option</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            {/* 4K UHD */}
-            <div>
-              <label className="block text-neutral-300 font-bold mb-1">4K Ultra HD File Size</label>
-              <input
-                type="text"
-                value={size4K}
-                onChange={(e) => setSize4K(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white mb-2"
-              />
-              <input
-                type="text"
-                placeholder="4K Magnet link / Torrent URL (optional)"
-                value={link4K}
-                onChange={(e) => setLink4K(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
-              />
-            </div>
+          {/* Quick Preset Buttons */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-[10px] uppercase font-bold text-neutral-500 mr-1">Quick Add:</span>
+            <button
+              type="button"
+              onClick={() => handleAddOption({ quality: '4K Ultra HD', size: '3.8 GB' })}
+              className="px-2 py-0.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[11px] text-neutral-300 hover:text-white transition-colors cursor-pointer"
+            >
+              + 4K Ultra HD
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddOption({ quality: '1080p Full HD', size: '1.8 GB' })}
+              className="px-2 py-0.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[11px] text-neutral-300 hover:text-white transition-colors cursor-pointer"
+            >
+              + 1080p Full HD
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddOption({ quality: '720p HD', size: '900 MB' })}
+              className="px-2 py-0.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[11px] text-neutral-300 hover:text-white transition-colors cursor-pointer"
+            >
+              + 720p HD
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddOption({ quality: '480p SD', size: '450 MB' })}
+              className="px-2 py-0.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[11px] text-neutral-300 hover:text-white transition-colors cursor-pointer"
+            >
+              + 480p SD
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddOption({ quality: '1080p HEVC Dual Audio', size: '1.2 GB' })}
+              className="px-2 py-0.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[11px] text-neutral-300 hover:text-white transition-colors cursor-pointer"
+            >
+              + HEVC Dual Audio
+            </button>
+          </div>
 
-            {/* 1080p */}
-            <div>
-              <label className="block text-neutral-300 font-bold mb-1">1080p Full HD File Size</label>
-              <input
-                type="text"
-                value={size1080p}
-                onChange={(e) => setSize1080p(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white mb-2"
-              />
-              <input
-                type="text"
-                placeholder="1080p Magnet link / Torrent URL (optional)"
-                value={link1080p}
-                onChange={(e) => setLink1080p(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
-              />
+          {/* Dynamic Download Options List */}
+          {downloadOptions.length === 0 ? (
+            <div className="py-8 text-center border border-dashed border-neutral-800 rounded-xl">
+              <p className="text-xs text-neutral-400">No download options added.</p>
+              <button
+                type="button"
+                onClick={() => handleAddOption()}
+                className="mt-2 text-xs text-white underline hover:text-neutral-300"
+              >
+                Click here to add a download option
+              </button>
             </div>
-
-            {/* 720p */}
-            <div>
-              <label className="block text-neutral-300 font-bold mb-1">720p HD File Size</label>
-              <input
-                type="text"
-                value={size720p}
-                onChange={(e) => setSize720p(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white mb-2"
-              />
-              <input
-                type="text"
-                placeholder="720p Magnet link / Torrent URL (optional)"
-                value={link720p}
-                onChange={(e) => setLink720p(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
-              />
-            </div>
-
-            {/* 480p */}
-            <div>
-              <label className="block text-neutral-300 font-bold mb-1">480p SD File Size</label>
-              <input
-                type="text"
-                value={size480p}
-                onChange={(e) => setSize480p(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white mb-2"
-              />
-              <input
-                type="text"
-                placeholder="480p Magnet link / Torrent URL (optional)"
-                value={link480p}
-                onChange={(e) => setLink480p(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
-              />
-            </div>
-
-            {/* Extra Dynamic Download Links (Unlimited) */}
-            <div className="pt-4 border-t border-neutral-900 sm:col-span-2 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <span>Extra Download Links ({extraLinks.length})</span>
-                  </h3>
-                  <p className="text-[11px] text-neutral-400">
-                    Add extra resolutions, audio languages, HEVC x265, IMAX, or dual audio links without limits.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAddExtraLink}
-                  className="px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 hover:border-white text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+          ) : (
+            <div className="space-y-3 pt-2">
+              {downloadOptions.map((opt, idx) => (
+                <div
+                  key={opt.id}
+                  className="p-3.5 rounded-xl bg-black border border-neutral-800 space-y-2.5 relative group hover:border-neutral-700 transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Extra Link</span>
-                </button>
-              </div>
-
-              {extraLinks.length > 0 && (
-                <div className="space-y-3 pt-1">
-                  {extraLinks.map((extra, idx) => (
-                    <div
-                      key={extra.id}
-                      className="p-3 rounded-xl bg-black border border-neutral-800 space-y-2 relative"
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-neutral-400">
+                      Option #{idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveOption(opt.id)}
+                      title="Remove this option"
+                      className="p-1 rounded text-neutral-500 hover:text-red-400 hover:bg-neutral-900 transition-colors cursor-pointer"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-neutral-300">
-                          Extra Link #{idx + 1}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveExtraLink(extra.id)}
-                          className="p-1 rounded-md text-neutral-500 hover:text-red-400 hover:bg-neutral-900 transition-colors cursor-pointer"
-                          title="Remove Link"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                        <div className="sm:col-span-2">
-                          <label className="block text-[10px] text-neutral-400 font-semibold mb-0.5">
-                            Quality Name / Title
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="e.g. 1080p HEVC (Hindi Dubbed) or 4K IMAX"
-                            value={extra.quality}
-                            onChange={(e) => handleUpdateExtraLink(extra.id, 'quality', e.target.value)}
-                            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] text-neutral-400 font-semibold mb-0.5">
-                            File Size
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="e.g. 2.1 GB"
-                            value={extra.size}
-                            onChange={(e) => handleUpdateExtraLink(extra.id, 'size', e.target.value)}
-                            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
-                          />
-                        </div>
-
-                        <div className="sm:col-span-3">
-                          <label className="block text-[10px] text-neutral-400 font-semibold mb-0.5">
-                            Magnet URI or Torrent / Direct File URL
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="magnet:?xt=urn:... or https://... (optional)"
-                            value={extra.url}
-                            onChange={(e) => handleUpdateExtraLink(extra.id, 'url', e.target.value)}
-                            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
-                          />
-                        </div>
-                      </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                    {/* Quality Name */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-[10px] text-neutral-400 font-semibold mb-1">
+                        Video Quality Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 4K Ultra HD, 1080p Full HD, 720p HD..."
+                        value={opt.quality}
+                        onChange={(e) => handleUpdateOption(opt.id, 'quality', e.target.value)}
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white font-medium"
+                      />
                     </div>
-                  ))}
+
+                    {/* File Size */}
+                    <div>
+                      <label className="block text-[10px] text-neutral-400 font-semibold mb-1">
+                        File Size
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 3.8 GB, 900 MB..."
+                        value={opt.size}
+                        onChange={(e) => handleUpdateOption(opt.id, 'size', e.target.value)}
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white font-medium"
+                      />
+                    </div>
+
+                    {/* Download / Magnet URL */}
+                    <div className="sm:col-span-3">
+                      <label className="block text-[10px] text-neutral-400 font-semibold mb-1">
+                        Download Link or Magnet URI (Optional - auto-generated if left blank)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="magnet:?xt=urn:... or https://... direct download url"
+                        value={opt.url || ''}
+                        onChange={(e) => handleUpdateOption(opt.id, 'url', e.target.value)}
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white font-mono text-xs"
+                      />
+                    </div>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Submit Publish Button */}
+        {/* Submit Publish / Update Button */}
         <div className="pt-2">
           <button
             type="submit"
             disabled={isPublishing}
-            className="w-full py-3.5 px-6 rounded-xl bg-white text-black font-black uppercase tracking-wider text-sm flex items-center justify-center gap-2 hover:bg-neutral-200 transition-colors shadow-lg disabled:opacity-50"
+            className="w-full py-3.5 px-6 rounded-xl bg-white text-black font-black uppercase tracking-wider text-sm flex items-center justify-center gap-2 hover:bg-neutral-200 transition-colors shadow-lg disabled:opacity-50 cursor-pointer"
           >
             <Upload className="w-4 h-4 stroke-[2.5]" />
-            <span>{isPublishing ? 'Publishing to Global Cloud...' : 'Publish Movie to Trending'}</span>
+            <span>
+              {isPublishing
+                ? 'Saving to Global Cloud...'
+                : editingMovieId
+                ? 'Update Movie in Trending'
+                : 'Publish Movie to Trending'}
+            </span>
           </button>
         </div>
 
@@ -695,13 +728,24 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
                   </div>
                 </div>
 
-                <button
-                  onClick={() => onDeleteCustomMovie(custMovie.id)}
-                  className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-900 transition-colors"
-                  title="Delete Movie"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleEditMovie(custMovie)}
+                    className="p-1.5 rounded-lg text-neutral-300 hover:text-white hover:bg-neutral-900 transition-colors flex items-center gap-1 cursor-pointer"
+                    title="Edit Movie"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline text-[11px]">Edit</span>
+                  </button>
+
+                  <button
+                    onClick={() => onDeleteCustomMovie(custMovie.id)}
+                    className="p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-neutral-900 transition-colors cursor-pointer"
+                    title="Delete Movie"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

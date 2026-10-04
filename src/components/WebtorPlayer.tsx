@@ -119,7 +119,7 @@ export const WebtorPlayer: React.FC<WebtorPlayerProps> = ({
       {isInitializing && !hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs pointer-events-none z-10 space-y-2">
           <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-          <span className="text-xs text-emerald-400 font-semibold">Connecting to Torrent Seeds...</span>
+          <span className="text-xs text-emerald-400 font-semibold">Connecting to Stream...</span>
         </div>
       )}
 
@@ -128,7 +128,7 @@ export const WebtorPlayer: React.FC<WebtorPlayerProps> = ({
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-neutral-950 z-20 text-center space-y-3">
           <AlertCircle className="w-8 h-8 text-amber-400" />
           <div>
-            <p className="text-sm font-bold text-white">Live Torrent Stream Notice</p>
+            <p className="text-sm font-bold text-white">Live Stream Notice</p>
             <p className="text-xs text-neutral-400 max-w-sm mt-1">
               Mobile browsers with strict cookie protection can stream directly via the dedicated player tab.
             </p>

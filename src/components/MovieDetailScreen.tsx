@@ -170,25 +170,37 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
     setPlayerKey(prev => prev + 1);
   };
 
-  // Combine standard 4K, 1080p, 720p, 480p and any extra custom download options
-  const standardQualities = ['4K', '1080p', '720p', '480p'];
-  const baseOptions = standardQualities.map(q => ({
-    id: q,
-    quality: q,
-    label: q === '4K' ? '4K Ultra HD' : q === '1080p' ? '1080p Full HD' : q === '720p' ? '720p HD' : '480p SD',
-    size: movie.downloadSizes?.[q] || (q === '4K' ? '3.8 GB' : q === '1080p' ? '1.8 GB' : q === '720p' ? '900 MB' : '450 MB'),
-    url: movie.downloadLinks?.[q]
-  }));
+  // Combine custom configured download options or fallback to standard 4K, 1080p, 720p, 480p
+  const allDownloadOptions = useMemo(() => {
+    if (movie.downloadOptions && movie.downloadOptions.length > 0) {
+      return movie.downloadOptions.map(opt => ({
+        id: opt.id,
+        quality: opt.quality,
+        label: opt.quality,
+        size: opt.size,
+        url: opt.url || movie.downloadLinks?.[opt.quality]
+      }));
+    }
 
-  const extraOptions = (movie.extraDownloadOptions || []).map((opt, i) => ({
-    id: opt.id || `extra-${i}`,
-    quality: opt.quality,
-    label: opt.quality,
-    size: opt.size || movie.downloadSizes?.[opt.quality] || '1.5 GB',
-    url: opt.url || movie.downloadLinks?.[opt.quality]
-  }));
+    const standardQualities = ['4K', '1080p', '720p', '480p'];
+    const baseOptions = standardQualities.map(q => ({
+      id: q,
+      quality: q,
+      label: q === '4K' ? '4K Ultra HD' : q === '1080p' ? '1080p Full HD' : q === '720p' ? '720p HD' : '480p SD',
+      size: movie.downloadSizes?.[q] || (q === '4K' ? '3.8 GB' : q === '1080p' ? '1.8 GB' : q === '720p' ? '900 MB' : '450 MB'),
+      url: movie.downloadLinks?.[q]
+    }));
 
-  const allDownloadOptions = [...baseOptions, ...extraOptions];
+    const extraOptions = (movie.extraDownloadOptions || []).map((opt, i) => ({
+      id: opt.id || `extra-${i}`,
+      quality: opt.quality,
+      label: opt.quality,
+      size: opt.size || movie.downloadSizes?.[opt.quality] || '1.5 GB',
+      url: opt.url || movie.downloadLinks?.[opt.quality]
+    }));
+
+    return [...baseOptions, ...extraOptions];
+  }, [movie]);
 
   const handleDownloadFile = (opt: { quality: string; size: string; url?: string }) => {
     const q = opt.quality;
@@ -431,10 +443,10 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
         {/* Right Column: Clean Download Links List with Download Button */}
         <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-5 flex flex-col justify-start">
           <p className="text-xs text-neutral-400 mb-4">
-            Select resolution and click the download icon to download the file.
+            Select resolution to download.
           </p>
 
-          {/* Quality Options Rows (Standard + Unlimited Extra Links) */}
+          {/* Quality Options Rows */}
           <div className="space-y-2.5">
             {allDownloadOptions.map((opt) => {
               const isDownloaded = downloadedQuality === opt.quality;
@@ -443,49 +455,33 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
                   key={opt.id}
                   className="w-full flex items-center justify-between p-3 rounded-xl border border-neutral-900 bg-black text-xs text-neutral-300 transition-colors"
                 >
-                  {/* Left: Torrent Logo + Resolution Name */}
-                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                    <img
-                      src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgeED3Cmbrd4zcEIHYFFX8MO58z5BJEmgmIkogwFY3LIPglUnaKPNy_ERcrKJKQWDN6AVXL12n4nl1xgpoOfrEC3nV6N1H7iDj98tQvqnDj1sSkF8h_z3BqMg_5azUCi7pnmo9fcSnZFlDd2qauvILU58vVdQx1q_HiwCNEZH7qeH7hDUOJJpfa9zqcYsMj/s320/ut2939ue0c-utorrent-logo-utorrent-logo-social-social-media-torrent-icon-free-download.png"
-                      alt="uTorrent Logo"
-                      className="w-5 h-5 object-contain shrink-0"
-                    />
-                    <div className="truncate">
-                      <span className="font-bold text-white text-xs block truncate">
-                        {opt.label}
-                      </span>
-                      <span className="text-[10px] text-neutral-400 block truncate">
-                        uTorrent Torrent File
-                      </span>
-                    </div>
+                  {/* Left: Video Quality */}
+                  <div className="min-w-0 pr-2">
+                    <span className="font-semibold text-neutral-400 text-xs sm:text-sm block truncate">
+                      {opt.label}
+                    </span>
                   </div>
 
-                  {/* Right: Size Badge + Dedicated Clickable Download Button */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-neutral-400 text-[11px] font-semibold bg-neutral-950 px-2 py-1 rounded border border-neutral-900">
+                  {/* Right: File Size + Normal Download Button */}
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <span className="text-neutral-400 text-[11px] sm:text-xs font-semibold bg-neutral-950 px-2.5 py-1 rounded border border-neutral-900">
                       {opt.size}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleDownloadFile(opt)}
-                      title={`Download ${opt.quality} Torrent File`}
-                      aria-label={`Download ${opt.quality} Torrent File`}
-                      className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 ${
+                      title={`Download ${opt.quality}`}
+                      aria-label={`Download ${opt.quality}`}
+                      className={`p-2 rounded-lg border transition-all cursor-pointer flex items-center justify-center ${
                         isDownloaded
                           ? 'bg-emerald-950/90 border-emerald-500 text-emerald-400 shadow-sm'
                           : 'bg-white hover:bg-neutral-200 border-white text-black active:scale-95'
                       }`}
                     >
                       {isDownloaded ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" />
-                          <span className="text-[10px] font-bold text-emerald-400 pr-0.5">Downloaded!</span>
-                        </>
+                        <Check className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
                       ) : (
-                        <>
-                          <Download className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                          <span className="text-[10px] font-bold text-black hidden sm:inline">Download</span>
-                        </>
+                        <Download className="w-4 h-4 text-black stroke-[2.5]" />
                       )}
                     </button>
                   </div>
