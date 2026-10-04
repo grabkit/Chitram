@@ -289,18 +289,6 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
 
         {/* Video Player Quick Actions */}
         <div className="flex items-center gap-2 text-xs">
-          {videoSource.type === 'webtor' ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/80 border border-emerald-700/60 text-emerald-400 font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Webtor Live Torrent Stream</span>
-            </span>
-          ) : (
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>HD Stream</span>
-            </span>
-          )}
-
           <button
             onClick={handleReloadPlayer}
             title="Reload Player"
@@ -309,41 +297,6 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
             <RefreshCw className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Reload</span>
           </button>
-
-          {videoSource.type === 'webtor' ? (
-            <>
-              <a
-                href={webtorWebUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Open in Dedicated Mobile Fullscreen Tab"
-                className="px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-700 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500 transition-colors flex items-center gap-1.5 cursor-pointer"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Web Player ↗</span>
-              </a>
-              <a
-                href={magnetUrl}
-                target="_self"
-                rel="noopener noreferrer"
-                title="Launch Magnet in uTorrent"
-                className="hidden sm:flex px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white transition-colors items-center gap-1.5 cursor-pointer"
-              >
-                <span>uTorrent</span>
-              </a>
-            </>
-          ) : (
-            <a
-              href={videoSource.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Open Stream in Full Tab"
-              className="px-2.5 py-1 rounded-md bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
-              <span>Open Stream ↗</span>
-            </a>
-          )}
         </div>
       </div>
 

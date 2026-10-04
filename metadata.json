@@ -1,6 +1,6 @@
 {
   "name": "Chitram - Stream & Download Movies",
-  "description": "Stream and download latest blockbusters, Telugu & regional cinema, and trending movies in 4K Ultra HD.",
+  "description": "Stream and download your favorite movies in HD & 4K. Simple, fast, and high quality. developed for all devices",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

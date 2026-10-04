@@ -54,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               alt="Chitram Logo"
               className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-cover ring-1 ring-neutral-800"
             />
-            <span className="text-lg sm:text-xl font-bold tracking-tight text-white font-google-sans">
+            <span className="text-lg sm:text-xl font-semibold tracking-tight text-white font-google-sans">
               Chitram
             </span>
           </button>
