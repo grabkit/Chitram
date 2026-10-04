@@ -118,8 +118,8 @@ export default function App() {
       return timeB - timeA;
     });
 
-    // Latest user-uploaded movies appear at the very TOP of the catalog, followed by defaults
-    return [...userUploadedMovies, ...ALL_CATALOG_MOVIES];
+    // Latest user-uploaded movies appear in the catalog (demo content completely removed)
+    return [...userUploadedMovies];
   }, [cloudMovies, customMovies]);
 
   // Downloads persistence (safe parsing & saving)
@@ -333,13 +333,17 @@ export default function App() {
 
               {currentMovies.length === 0 ? (
                 <div className="py-16 text-center text-neutral-500">
-                  <p className="text-sm font-semibold text-neutral-300">No movies found for "{searchQuery}"</p>
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="mt-3 text-xs bg-neutral-900 border border-neutral-800 text-white px-3 py-1.5 rounded-lg hover:bg-neutral-800"
-                  >
-                    Reset Search
-                  </button>
+                  <p className="text-sm font-semibold text-neutral-300">
+                    {searchQuery ? `No movies found for "${searchQuery}"` : 'No movies published yet.'}
+                  </p>
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="mt-3 text-xs bg-neutral-900 border border-neutral-800 text-white px-3 py-1.5 rounded-lg hover:bg-neutral-800"
+                    >
+                      Reset Search
+                    </button>
+                  )}
                 </div>
               ) : (
                 /* Exactly 5 movies posters per row across all devices (Mobile & Desktop) */
