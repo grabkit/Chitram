@@ -58,6 +58,7 @@ export default function App() {
           '480p': '450 MB',
         },
         downloadLinks: m.downloadLinks || {},
+        downloadOptions: Array.isArray(m.downloadOptions) ? m.downloadOptions : undefined,
         extraDownloadOptions: Array.isArray(m.extraDownloadOptions) ? m.extraDownloadOptions : undefined,
         isCustom: true
       }));
@@ -85,10 +86,25 @@ export default function App() {
 
   // Combined full catalog: Cloud Firestore movies + Local published cache + Default catalog
   const allMovies = useMemo(() => {
-    // Deduplicate cloud movies with local movies
-    const cloudIds = new Set(cloudMovies.map(m => m.id));
-    const nonDuplicatedLocal = customMovies.filter(m => !cloudIds.has(m.id));
-    return [...cloudMovies, ...nonDuplicatedLocal, ...ALL_CATALOG_MOVIES];
+    const cloudMap = new Map<string, Movie>();
+    cloudMovies.forEach(m => cloudMap.set(m.id, m));
+    
+    const mergedCustom = customMovies.map(local => {
+      const cloud = cloudMap.get(local.id);
+      if (cloud) {
+        cloudMap.delete(local.id);
+        return {
+          ...local,
+          ...cloud,
+          downloadOptions: (cloud.downloadOptions && cloud.downloadOptions.length > 0) ? cloud.downloadOptions : local.downloadOptions,
+          downloadLinks: { ...local.downloadLinks, ...cloud.downloadLinks }
+        };
+      }
+      return local;
+    });
+
+    const remainingCloud = Array.from(cloudMap.values());
+    return [...mergedCustom, ...remainingCloud, ...ALL_CATALOG_MOVIES];
   }, [cloudMovies, customMovies]);
 
   // Downloads persistence (safe parsing & saving)
@@ -216,9 +232,19 @@ export default function App() {
   // Combined creator list of movies
   const creatorMoviesList = useMemo(() => {
     const map = new Map<string, Movie>();
-    cloudMovies.forEach(m => map.set(m.id, m));
-    customMovies.forEach(m => {
-      if (!map.has(m.id)) map.set(m.id, m);
+    customMovies.forEach(m => map.set(m.id, m));
+    cloudMovies.forEach(m => {
+      const existing = map.get(m.id);
+      if (existing) {
+        map.set(m.id, {
+          ...existing,
+          ...m,
+          downloadOptions: (m.downloadOptions && m.downloadOptions.length > 0) ? m.downloadOptions : existing.downloadOptions,
+          downloadLinks: { ...existing.downloadLinks, ...m.downloadLinks }
+        });
+      } else {
+        map.set(m.id, m);
+      }
     });
     return Array.from(map.values());
   }, [cloudMovies, customMovies]);

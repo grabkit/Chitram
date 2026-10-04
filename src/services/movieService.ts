@@ -6,7 +6,7 @@ import {
   onSnapshot 
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { Movie } from '../types';
+import { Movie, DownloadOption } from '../types';
 
 const MOVIES_PATH = 'movies';
 
@@ -24,6 +24,19 @@ export function subscribeToGlobalMovies(
         snapshot.forEach((docSnap) => {
           const data = docSnap.data();
           if (data && data.title) {
+            const rawDownloadLinks = data.downloadLinks && typeof data.downloadLinks === 'object' ? data.downloadLinks : {};
+            
+            // Reconstruct downloadOptions array safely
+            let options: DownloadOption[] | undefined = undefined;
+            if (Array.isArray(data.downloadOptions) && data.downloadOptions.length > 0) {
+              options = data.downloadOptions.map((opt: any, index: number) => ({
+                id: String(opt.id || `opt-${index}`),
+                quality: String(opt.quality || ''),
+                size: String(opt.size || '1.5 GB'),
+                url: String(opt.url || rawDownloadLinks[opt.quality] || '')
+              }));
+            }
+
             fetchedMovies.push({
               id: docSnap.id,
               title: data.title || 'Untitled',
@@ -45,7 +58,8 @@ export function subscribeToGlobalMovies(
                 '720p': '900 MB',
                 '480p': '450 MB',
               },
-              downloadLinks: data.downloadLinks || {},
+              downloadLinks: rawDownloadLinks,
+              downloadOptions: options,
               extraDownloadOptions: Array.isArray(data.extraDownloadOptions) ? data.extraDownloadOptions : undefined,
               isCustom: true
             });
@@ -78,14 +92,39 @@ export function subscribeToGlobalMovies(
 export async function publishMovieToFirestore(movie: Movie): Promise<void> {
   const docRef = doc(db, MOVIES_PATH, movie.id);
 
-  // Strictly sanitize download links so no undefined exists
+  // 1. Strictly sanitize download links map (no undefined values for Firestore)
   const cleanLinks: Record<string, string> = {};
-  if (movie.downloadLinks) {
+  if (movie.downloadLinks && typeof movie.downloadLinks === 'object') {
     for (const [k, v] of Object.entries(movie.downloadLinks)) {
       if (v && typeof v === 'string' && v.trim()) {
-        cleanLinks[k] = v.trim();
+        cleanLinks[k.trim()] = v.trim();
       }
     }
+  }
+
+  // 2. Also populate cleanLinks from downloadOptions
+  if (Array.isArray(movie.downloadOptions)) {
+    movie.downloadOptions.forEach(opt => {
+      if (opt.quality && opt.url && typeof opt.url === 'string' && opt.url.trim()) {
+        cleanLinks[opt.quality.trim()] = opt.url.trim();
+      }
+    });
+  }
+
+  // 3. Strictly sanitize downloadOptions array (NO undefined properties anywhere)
+  const cleanOptions: Array<{ id: string; quality: string; size: string; url: string }> = [];
+  if (Array.isArray(movie.downloadOptions)) {
+    movie.downloadOptions.forEach((opt, idx) => {
+      const q = String(opt.quality || '').trim();
+      if (q) {
+        cleanOptions.push({
+          id: String(opt.id || `opt-${idx}`),
+          quality: q,
+          size: String(opt.size || '1.5 GB').trim(),
+          url: String(opt.url || cleanLinks[q] || '').trim() // ALWAYS string, never undefined!
+        });
+      }
+    });
   }
 
   const payload = {
@@ -109,6 +148,7 @@ export async function publishMovieToFirestore(movie: Movie): Promise<void> {
       '480p': '450 MB',
     },
     downloadLinks: cleanLinks,
+    downloadOptions: cleanOptions,
     extraDownloadOptions: Array.isArray(movie.extraDownloadOptions) ? movie.extraDownloadOptions : [],
     createdAt: Date.now()
   };

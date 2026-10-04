@@ -83,7 +83,12 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
     setVideoUrl(m.videoSampleUrl || '');
 
     if (m.downloadOptions && m.downloadOptions.length > 0) {
-      setDownloadOptions(m.downloadOptions.map(opt => ({ ...opt })));
+      setDownloadOptions(m.downloadOptions.map(opt => ({
+        id: opt.id,
+        quality: opt.quality,
+        size: opt.size,
+        url: opt.url || m.downloadLinks?.[opt.quality] || ''
+      })));
     } else {
       // Build from downloadSizes & extraDownloadOptions
       const opts: DownloadOption[] = [];
@@ -189,23 +194,23 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
       const finalBackdrop = backdropUrl.trim() || finalPoster;
       const finalVideo = videoUrl.trim() || 'https://www.youtube.com/embed/g3JUbg4v6gc';
 
-      // Filter valid download options
-      const validOptions = downloadOptions
-        .filter(opt => opt.quality.trim().length > 0)
+      // Filter valid download options (always clean strings, never undefined)
+      const validOptions: DownloadOption[] = downloadOptions
+        .filter(opt => opt.quality && opt.quality.trim().length > 0)
         .map(opt => ({
-          id: opt.id,
+          id: opt.id || `opt-${Date.now()}`,
           quality: opt.quality.trim(),
-          size: opt.size.trim() || '1.5 GB',
-          url: opt.url?.trim() || undefined
+          size: opt.size?.trim() || '1.5 GB',
+          url: opt.url?.trim() || ''
         }));
 
       // Build compatibility maps
       const downloadSizesMap: Record<string, string> = {};
-      const downloadLinksMap: Record<string, string | undefined> = {};
+      const downloadLinksMap: Record<string, string> = {};
       validOptions.forEach(opt => {
         downloadSizesMap[opt.quality] = opt.size;
-        if (opt.url) {
-          downloadLinksMap[opt.quality] = opt.url;
+        if (opt.url && opt.url.trim()) {
+          downloadLinksMap[opt.quality] = opt.url.trim();
         }
       });
 
