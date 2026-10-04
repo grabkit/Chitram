@@ -11,7 +11,7 @@ interface MovieDetailScreenProps {
   trendingMovies: Movie[];
 }
 
-function getMagnetLink(movie: Movie, quality: '4K' | '1080p' | '720p' | '480p'): string {
+function getMagnetLink(movie: Movie, quality: string): string {
   const custom = movie.downloadLinks?.[quality];
   if (custom && (custom.startsWith('magnet:') || custom.startsWith('http://') || custom.startsWith('https://'))) {
     return custom;
@@ -19,7 +19,7 @@ function getMagnetLink(movie: Movie, quality: '4K' | '1080p' | '720p' | '480p'):
   
   // Format clean movie title for torrent display name
   const safeTitle = (movie.title || 'Movie').replace(/[^\w\s.-]/g, '');
-  const dn = encodeURIComponent(`${safeTitle}.${movie.year || 2024}.${quality}.Telugu.WEB-DL.DDP5.1.Atmos-Chitram`);
+  const dn = encodeURIComponent(`${safeTitle}.${movie.year || 2024}.${quality.replace(/\s+/g, '.')}.Telugu.WEB-DL.DDP5.1.Atmos-Chitram`);
   
   // Generate deterministic 40-character hex BTIH hash
   const raw = `${safeTitle}-${movie.year || 2024}-${quality}-chitram-utorrent`;
@@ -52,19 +52,40 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
 }) => {
   const [downloadedQuality, setDownloadedQuality] = useState<string | null>(null);
 
-  const handleDownloadFile = (q: '4K' | '1080p' | '720p' | '480p') => {
+  // Combine standard 4K, 1080p, 720p, 480p and any extra custom download options
+  const standardQualities = ['4K', '1080p', '720p', '480p'];
+  const baseOptions = standardQualities.map(q => ({
+    id: q,
+    quality: q,
+    label: q === '4K' ? '4K Ultra HD' : q === '1080p' ? '1080p Full HD' : q === '720p' ? '720p HD' : '480p SD',
+    size: movie.downloadSizes?.[q] || (q === '4K' ? '3.8 GB' : q === '1080p' ? '1.8 GB' : q === '720p' ? '900 MB' : '450 MB'),
+    url: movie.downloadLinks?.[q]
+  }));
+
+  const extraOptions = (movie.extraDownloadOptions || []).map((opt, i) => ({
+    id: opt.id || `extra-${i}`,
+    quality: opt.quality,
+    label: opt.quality,
+    size: opt.size || movie.downloadSizes?.[opt.quality] || '1.5 GB',
+    url: opt.url || movie.downloadLinks?.[opt.quality]
+  }));
+
+  const allDownloadOptions = [...baseOptions, ...extraOptions];
+
+  const handleDownloadFile = (opt: { quality: string; size: string; url?: string }) => {
+    const q = opt.quality;
     try {
       setDownloadedQuality(q);
 
-      const sizeText = movie.downloadSizes?.[q] || (q === '4K' ? '3.8 GB' : q === '1080p' ? '1.8 GB' : q === '720p' ? '900 MB' : '450 MB');
+      const sizeText = opt.size;
       const safeTitle = (movie.title || 'Movie').replace(/[\s/\\?%*:|"<>]/g, '_');
-      const customLink = movie.downloadLinks?.[q];
+      const customLink = opt.url || movie.downloadLinks?.[q];
 
       // 1. If direct downloadable file URL is provided (http/https video or torrent file)
       if (customLink && (customLink.startsWith('http://') || customLink.startsWith('https://'))) {
         const link = document.createElement('a');
         link.href = customLink;
-        link.download = `${safeTitle}_${movie.year || 2024}_${q}.mp4`;
+        link.download = `${safeTitle}_${movie.year || 2024}_${q.replace(/\s+/g, '_')}.mp4`;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         document.body.appendChild(link);
@@ -73,7 +94,7 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
       } else {
         // 2. Generate and download real .torrent file directly to the user's computer/phone
         const magnetUri = getMagnetLink(movie, q);
-        const fileName = `${safeTitle}.${movie.year || 2024}.${q}.Telugu.WEB-DL-Chitram.torrent`;
+        const fileName = `${safeTitle}.${movie.year || 2024}.${q.replace(/\s+/g, '_')}.Telugu.WEB-DL-Chitram.torrent`;
         
         const torrentContent = `d8:announce41:udp://tracker.opentrackr.org:1337/announce13:announce-listll41:udp://tracker.opentrackr.org:1337/announceel36:udp://open.tracker.cl:1337/announceel44:udp://tracker.openbittorrent.com:6969/announceee7:comment42:Downloaded from Chitram - High Speed Torrents10:created by14:Chitram WebDL13:creation datei${Math.floor(Date.now() / 1000)}e4:infod6:lengthi${q === '4K' ? 4080218931 : q === '1080p' ? 1932735283 : q === '720p' ? 943718400 : 471859200}e4:name${safeTitle.length}:${safeTitle}12:piece lengthi262144e6:pieces20:12345678901234567890ee`;
 
@@ -230,43 +251,42 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
             Select resolution and click the download icon to download the file.
           </p>
 
-          {/* Quality Options Rows */}
+          {/* Quality Options Rows (Standard + Unlimited Extra Links) */}
           <div className="space-y-2.5">
-            {(['4K', '1080p', '720p', '480p'] as const).map((q) => {
-              const sizeText = movie.downloadSizes?.[q] || (q === '4K' ? '3.8 GB' : q === '1080p' ? '1.8 GB' : q === '720p' ? '900 MB' : '450 MB');
-              const isDownloaded = downloadedQuality === q;
+            {allDownloadOptions.map((opt) => {
+              const isDownloaded = downloadedQuality === opt.quality;
               return (
                 <div
-                  key={q}
+                  key={opt.id}
                   className="w-full flex items-center justify-between p-3 rounded-xl border border-neutral-900 bg-black text-xs text-neutral-300 transition-colors"
                 >
                   {/* Left: Torrent Logo + Resolution Name */}
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
                     <img
                       src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgeED3Cmbrd4zcEIHYFFX8MO58z5BJEmgmIkogwFY3LIPglUnaKPNy_ERcrKJKQWDN6AVXL12n4nl1xgpoOfrEC3nV6N1H7iDj98tQvqnDj1sSkF8h_z3BqMg_5azUCi7pnmo9fcSnZFlDd2qauvILU58vVdQx1q_HiwCNEZH7qeH7hDUOJJpfa9zqcYsMj/s320/ut2939ue0c-utorrent-logo-utorrent-logo-social-social-media-torrent-icon-free-download.png"
                       alt="uTorrent Logo"
                       className="w-5 h-5 object-contain shrink-0"
                     />
-                    <div>
-                      <span className="font-bold text-white text-xs block">
-                        {q} {q === '4K' ? 'Ultra HD' : q === '1080p' ? 'Full HD' : 'HD'}
+                    <div className="truncate">
+                      <span className="font-bold text-white text-xs block truncate">
+                        {opt.label}
                       </span>
-                      <span className="text-[10px] text-neutral-400">
+                      <span className="text-[10px] text-neutral-400 block truncate">
                         uTorrent Torrent File
                       </span>
                     </div>
                   </div>
 
                   {/* Right: Size Badge + Dedicated Clickable Download Button */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <span className="text-neutral-400 text-[11px] font-semibold bg-neutral-950 px-2 py-1 rounded border border-neutral-900">
-                      {sizeText}
+                      {opt.size}
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleDownloadFile(q)}
-                      title={`Download ${q} Torrent File`}
-                      aria-label={`Download ${q} Torrent File`}
+                      onClick={() => handleDownloadFile(opt)}
+                      title={`Download ${opt.quality} Torrent File`}
+                      aria-label={`Download ${opt.quality} Torrent File`}
                       className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 ${
                         isDownloaded
                           ? 'bg-emerald-950/90 border-emerald-500 text-emerald-400 shadow-sm'

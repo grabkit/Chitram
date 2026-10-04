@@ -1,3 +1,10 @@
+export interface DownloadOption {
+  id: string;
+  quality: string;
+  size: string;
+  url?: string;
+}
+
 export interface Movie {
   id: string;
   title: string;
@@ -13,18 +20,9 @@ export interface Movie {
   director: string;
   cast: string[];
   languages: string[];
-  downloadSizes: {
-    '4K': string;
-    '1080p': string;
-    '720p': string;
-    '480p': string;
-  };
-  downloadLinks?: {
-    '4K'?: string;
-    '1080p'?: string;
-    '720p'?: string;
-    '480p'?: string;
-  };
+  downloadSizes: Record<string, string>;
+  downloadLinks?: Record<string, string | undefined>;
+  extraDownloadOptions?: DownloadOption[];
   videoSampleUrl: string;
   trailerTitle?: string;
   isCustom?: boolean;
@@ -41,7 +39,7 @@ export interface MovieRow {
 export interface DownloadItem {
   id: string;
   movie: Movie;
-  quality: '4K' | '1080p' | '720p' | '480p';
+  quality: string;
   size: string;
   language: string;
   progress: number;

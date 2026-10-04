@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Upload, Film, Link as LinkIcon, Check, Image as ImageIcon, Trash2 } from 'lucide-react';
-import { Movie } from '../types';
+import { ArrowLeft, Upload, Film, Link as LinkIcon, Check, Image as ImageIcon, Trash2, Plus } from 'lucide-react';
+import { Movie, DownloadOption } from '../types';
 
 interface UploadMovieScreenProps {
   onBack: () => void;
   onPublishMovie: (newMovie: Movie) => Promise<void> | void;
   customMovies: Movie[];
   onDeleteCustomMovie: (id: string) => void;
+}
+
+interface ExtraLinkField {
+  id: string;
+  quality: string;
+  size: string;
+  url: string;
 }
 
 export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
@@ -31,7 +38,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
   const [backdropUrl, setBackdropUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
 
-  // Download Sizes & Links
+  // Download Sizes & Links (Default 4)
   const [size4K, setSize4K] = useState('3.8 GB');
   const [link4K, setLink4K] = useState('');
   const [size1080p, setSize1080p] = useState('1.8 GB');
@@ -40,6 +47,29 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
   const [link720p, setLink720p] = useState('');
   const [size480p, setSize480p] = useState('450 MB');
   const [link480p, setLink480p] = useState('');
+
+  // Dynamic Extra Links (Unlimited)
+  const [extraLinks, setExtraLinks] = useState<ExtraLinkField[]>([]);
+
+  const handleAddExtraLink = () => {
+    setExtraLinks(prev => [
+      ...prev,
+      {
+        id: `extra-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        quality: '',
+        size: '1.5 GB',
+        url: ''
+      }
+    ]);
+  };
+
+  const handleRemoveExtraLink = (id: string) => {
+    setExtraLinks(prev => prev.filter(l => l.id !== id));
+  };
+
+  const handleUpdateExtraLink = (id: string, field: 'quality' | 'size' | 'url', value: string) => {
+    setExtraLinks(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
+  };
 
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedSuccess, setPublishedSuccess] = useState(false);
@@ -107,6 +137,35 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
       const finalBackdrop = backdropUrl.trim() || finalPoster;
       const finalVideo = videoUrl.trim() || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4';
 
+      const downloadSizesMap: Record<string, string> = {
+        '4K': size4K.trim() || '3.8 GB',
+        '1080p': size1080p.trim() || '1.8 GB',
+        '720p': size720p.trim() || '900 MB',
+        '480p': size480p.trim() || '450 MB',
+      };
+      const downloadLinksMap: Record<string, string | undefined> = {
+        '4K': link4K.trim() || undefined,
+        '1080p': link1080p.trim() || undefined,
+        '720p': link720p.trim() || undefined,
+        '480p': link480p.trim() || undefined,
+      };
+
+      const validExtraOptions: DownloadOption[] = extraLinks
+        .filter(l => l.quality.trim().length > 0)
+        .map(l => ({
+          id: l.id,
+          quality: l.quality.trim(),
+          size: l.size.trim() || '1.5 GB',
+          url: l.url.trim() || undefined
+        }));
+
+      validExtraOptions.forEach(opt => {
+        downloadSizesMap[opt.quality] = opt.size;
+        if (opt.url) {
+          downloadLinksMap[opt.quality] = opt.url;
+        }
+      });
+
       const newMovie: Movie = {
         id: `movie-${Date.now()}-${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
         title: title.trim(),
@@ -122,18 +181,9 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
         posterUrl: finalPoster,
         backdropUrl: finalBackdrop,
         videoSampleUrl: finalVideo,
-        downloadSizes: {
-          '4K': size4K.trim() || '3.8 GB',
-          '1080p': size1080p.trim() || '1.8 GB',
-          '720p': size720p.trim() || '900 MB',
-          '480p': size480p.trim() || '450 MB',
-        },
-        downloadLinks: {
-          '4K': link4K.trim() || undefined,
-          '1080p': link1080p.trim() || undefined,
-          '720p': link720p.trim() || undefined,
-          '480p': link480p.trim() || undefined,
-        },
+        downloadSizes: downloadSizesMap,
+        downloadLinks: downloadLinksMap,
+        extraDownloadOptions: validExtraOptions.length > 0 ? validExtraOptions : undefined,
         isCustom: true
       };
 
@@ -152,6 +202,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
       setLink1080p('');
       setLink720p('');
       setLink480p('');
+      setExtraLinks([]);
 
       setTimeout(() => {
         setPublishedSuccess(false);
@@ -511,6 +562,94 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
                 onChange={(e) => setLink480p(e.target.value)}
                 className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
               />
+            </div>
+
+            {/* Extra Dynamic Download Links (Unlimited) */}
+            <div className="pt-4 border-t border-neutral-900 sm:col-span-2 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <span>Extra Download Links ({extraLinks.length})</span>
+                  </h3>
+                  <p className="text-[11px] text-neutral-400">
+                    Add extra resolutions, audio languages, HEVC x265, IMAX, or dual audio links without limits.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddExtraLink}
+                  className="px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-700 hover:border-white text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Extra Link</span>
+                </button>
+              </div>
+
+              {extraLinks.length > 0 && (
+                <div className="space-y-3 pt-1">
+                  {extraLinks.map((extra, idx) => (
+                    <div
+                      key={extra.id}
+                      className="p-3 rounded-xl bg-black border border-neutral-800 space-y-2 relative"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-neutral-300">
+                          Extra Link #{idx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveExtraLink(extra.id)}
+                          className="p-1 rounded-md text-neutral-500 hover:text-red-400 hover:bg-neutral-900 transition-colors cursor-pointer"
+                          title="Remove Link"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                        <div className="sm:col-span-2">
+                          <label className="block text-[10px] text-neutral-400 font-semibold mb-0.5">
+                            Quality Name / Title
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 1080p HEVC (Hindi Dubbed) or 4K IMAX"
+                            value={extra.quality}
+                            onChange={(e) => handleUpdateExtraLink(extra.id, 'quality', e.target.value)}
+                            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] text-neutral-400 font-semibold mb-0.5">
+                            File Size
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 2.1 GB"
+                            value={extra.size}
+                            onChange={(e) => handleUpdateExtraLink(extra.id, 'size', e.target.value)}
+                            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-3">
+                          <label className="block text-[10px] text-neutral-400 font-semibold mb-0.5">
+                            Magnet URI or Torrent / Direct File URL
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="magnet:?xt=urn:... or https://... (optional)"
+                            value={extra.url}
+                            onChange={(e) => handleUpdateExtraLink(extra.id, 'url', e.target.value)}
+                            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
