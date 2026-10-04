@@ -1,5 +1,5 @@
 import React from 'react';
-import { Film, Search, Download, X } from 'lucide-react';
+import { Search, Download, X } from 'lucide-react';
 
 interface NavbarProps {
   searchQuery: string;
@@ -47,12 +47,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               e.preventDefault();
               onHomeClick?.();
             }} 
-            className="flex items-center gap-2.5 text-left focus:outline-none"
+            className="flex items-center gap-2.5 text-left focus:outline-none group cursor-pointer"
           >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white flex items-center justify-center">
-              <Film className="w-4 h-4 text-black stroke-[2.5]" />
-            </div>
-            <span className="text-lg sm:text-xl font-black tracking-tight text-white uppercase font-sans">
+            <img
+              src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhvTYp98hmZVvmpEmuQjvE7GqgjwZQahJo8tA4IAMsTldvEEWzfZXOCo1z4pRuC9FPy6n1f8IPgyJb9AyK_kROkv9ePGI3Y1Z06p6r1NNMxdqVzGJJf5Td_A4wk86ArhZRXhIbRfn9t-KBNZJB3ScxiAJNx3cbf33uArCXfPJPrB-u_N8-IOBXcNdoD8iVj/s320/WhatsApp%20Image%202026-10-04%20at%209.40.28%20AM.jpeg"
+              alt="Chitram Logo"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-cover ring-1 ring-neutral-800"
+            />
+            <span className="text-lg sm:text-xl font-bold tracking-tight text-white font-google-sans">
               Chitram
             </span>
           </button>

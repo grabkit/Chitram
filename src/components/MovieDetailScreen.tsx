@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Download, CheckCircle2, Star, Clock, Film, ExternalLink, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Copy, Check } from 'lucide-react';
 import { Movie, DownloadItem } from '../types';
 import { MovieCard } from './MovieCard';
 
@@ -7,7 +7,7 @@ interface MovieDetailScreenProps {
   movie: Movie;
   onBack: () => void;
   onSelectMovie: (movie: Movie) => void;
-  onAddDownload: (item: DownloadItem) => void;
+  onAddDownload?: (item: DownloadItem) => void;
   trendingMovies: Movie[];
 }
 
@@ -47,65 +47,30 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
   movie,
   onBack,
   onSelectMovie,
-  onAddDownload,
   trendingMovies
 }) => {
-  const [selectedQuality, setSelectedQuality] = useState<'4K' | '1080p' | '720p' | '480p'>('1080p');
-  const [downloaded, setDownloaded] = useState(false);
-  const [activeMagnet, setActiveMagnet] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedQuality, setCopiedQuality] = useState<string | null>(null);
 
-  const handleDownload = (quality: '4K' | '1080p' | '720p' | '480p') => {
+  const handleCopyQualityMagnet = (q: '4K' | '1080p' | '720p' | '480p') => {
     try {
-      setSelectedQuality(quality);
-      setDownloaded(true);
-
-      const downloadItem: DownloadItem = {
-        id: `${movie.id}-${quality}-${Date.now()}`,
-        movie,
-        quality,
-        size: movie.downloadSizes?.[quality] || '1.8 GB',
-        language: 'English / Dual Audio',
-        progress: 100,
-        speed: '50 MB/s',
-        status: 'completed',
-        timestamp: Date.now()
-      };
-      onAddDownload(downloadItem);
-
-      // Generate or retrieve the uTorrent Magnet URI
-      const magnetUri = getMagnetLink(movie, quality);
-      setActiveMagnet(magnetUri);
-
-      // Trigger redirection to uTorrent app via magnet protocol
-      const a = document.createElement('a');
-      a.href = magnetUri;
-      a.rel = 'noopener noreferrer';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      // Try window.location.href for Android intent redirection
-      try {
-        window.location.href = magnetUri;
-      } catch {
-        // Ignored
-      }
-
-      setTimeout(() => {
-        setDownloaded(false);
-      }, 7000);
+      const magnetUri = getMagnetLink(movie, q);
+      navigator.clipboard.writeText(magnetUri).then(() => {
+        setCopiedQuality(q);
+        setTimeout(() => setCopiedQuality(null), 2500);
+      }).catch(() => {
+        // Fallback copy
+        const textArea = document.createElement('textarea');
+        textArea.value = magnetUri;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopiedQuality(q);
+        setTimeout(() => setCopiedQuality(null), 2500);
+      });
     } catch (err) {
-      console.warn('Download error:', err instanceof Error ? err.message : String(err));
+      console.warn('Copy error:', err);
     }
-  };
-
-  const handleCopyMagnet = () => {
-    const magnetUri = activeMagnet || getMagnetLink(movie, selectedQuality);
-    navigator.clipboard.writeText(magnetUri).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
-    }).catch(() => {});
   };
 
   // 5 related trending movies excluding current movie
@@ -114,7 +79,6 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
   const movieGenres = Array.isArray(movie.genre) ? movie.genre.join(', ') : 'Drama';
   const movieLanguages = Array.isArray(movie.languages) ? movie.languages.join(', ') : 'Telugu';
   const movieCast = Array.isArray(movie.cast) ? movie.cast.join(', ') : 'Cast';
-  const currentMagnet = activeMagnet || getMagnetLink(movie, selectedQuality);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
@@ -209,95 +173,68 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
           </div>
         </div>
 
-        {/* Right Column: Download Options with uTorrent Redirect */}
-        <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Film className="w-4 h-4 text-white" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Download Movie
-                </h3>
-              </div>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">
-                µTorrent Ready
-              </span>
-            </div>
-            <p className="text-xs text-neutral-400 mb-4">
-              Select resolution to download directly in <strong>uTorrent App</strong>.
-            </p>
+        {/* Right Column: Clean Download Links List with Copy Button */}
+        <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-5 flex flex-col justify-start">
+          <p className="text-xs text-neutral-400 mb-4">
+            Copy magnet link to download in <strong>uTorrent</strong>.
+          </p>
 
-            {/* Quality Selection Grid */}
-            <div className="space-y-2">
-              {(['4K', '1080p', '720p', '480p'] as const).map((q) => {
-                const isSelected = selectedQuality === q;
-                const sizeText = movie.downloadSizes?.[q] || (q === '4K' ? '3.8 GB' : q === '1080p' ? '1.8 GB' : q === '720p' ? '900 MB' : '450 MB');
-                return (
-                  <button
-                    key={q}
-                    onClick={() => setSelectedQuality(q)}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-xs transition-colors ${
-                      isSelected
-                        ? 'border-white bg-neutral-900 text-white'
-                        : 'border-neutral-900 bg-black text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
-                    }`}
-                  >
-                    <span className="font-bold">{q} {q === '4K' ? 'Ultra HD' : q === '1080p' ? 'Full HD' : 'HD'}</span>
-                    <span className="text-neutral-400 text-[11px]">{sizeText}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* Quality Options Rows */}
+          <div className="space-y-2.5">
+            {(['4K', '1080p', '720p', '480p'] as const).map((q) => {
+              const sizeText = movie.downloadSizes?.[q] || (q === '4K' ? '3.8 GB' : q === '1080p' ? '1.8 GB' : q === '720p' ? '900 MB' : '450 MB');
+              const isCopied = copiedQuality === q;
+              return (
+                <div
+                  key={q}
+                  className="w-full flex items-center justify-between p-3 rounded-xl border border-neutral-900 bg-black text-xs text-neutral-300 transition-colors"
+                >
+                  {/* Left: Torrent Logo + Resolution Name */}
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgeED3Cmbrd4zcEIHYFFX8MO58z5BJEmgmIkogwFY3LIPglUnaKPNy_ERcrKJKQWDN6AVXL12n4nl1xgpoOfrEC3nV6N1H7iDj98tQvqnDj1sSkF8h_z3BqMg_5azUCi7pnmo9fcSnZFlDd2qauvILU58vVdQx1q_HiwCNEZH7qeH7hDUOJJpfa9zqcYsMj/s320/ut2939ue0c-utorrent-logo-utorrent-logo-social-social-media-torrent-icon-free-download.png"
+                      alt="uTorrent Logo"
+                      className="w-5 h-5 object-contain shrink-0"
+                    />
+                    <div>
+                      <span className="font-bold text-white text-xs block">
+                        {q} {q === '4K' ? 'Ultra HD' : q === '1080p' ? 'Full HD' : 'HD'}
+                      </span>
+                      <span className="text-[10px] text-neutral-400">
+                        uTorrent Magnet
+                      </span>
+                    </div>
+                  </div>
 
-          <div className="mt-5 pt-4 border-t border-neutral-900 space-y-2.5">
-            {downloaded && (
-              <div className="p-3 rounded-lg bg-emerald-950/50 border border-emerald-500/40 text-xs text-emerald-200 space-y-2 animate-fadeIn">
-                <div className="font-bold flex items-center gap-1.5 text-emerald-300">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Redirecting to uTorrent App...</span>
+                  {/* Right: Size Badge + Dedicated Clickable Copy Button */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-neutral-400 text-[11px] font-semibold bg-neutral-950 px-2 py-1 rounded border border-neutral-900">
+                      {sizeText}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyQualityMagnet(q)}
+                      title={`Copy ${q} Magnet Link`}
+                      aria-label={`Copy ${q} Magnet Link`}
+                      className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                        isCopied
+                          ? 'bg-emerald-950/90 border-emerald-500 text-emerald-400 shadow-sm'
+                          : 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-500 active:scale-95'
+                      }`}
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" />
+                          <span className="text-[10px] font-bold text-emerald-400 pr-0.5">Copied!</span>
+                        </>
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 stroke-[2]" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <p className="text-[11px] text-neutral-300 leading-normal">
-                  If uTorrent doesn't open automatically on your device, click the button below:
-                </p>
-                <div className="flex items-center gap-2 pt-1">
-                  <a
-                    href={currentMagnet}
-                    className="flex-1 py-1.5 px-2 bg-emerald-500 text-black font-bold text-center rounded text-[11px] hover:bg-emerald-400 flex items-center justify-center gap-1"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    <span>Open uTorrent</span>
-                  </a>
-                  <button
-                    onClick={handleCopyMagnet}
-                    className="py-1.5 px-2.5 bg-neutral-900 border border-neutral-700 text-white rounded text-[11px] hover:bg-neutral-800 flex items-center gap-1"
-                  >
-                    {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                    <span>{copied ? 'Copied!' : 'Copy Magnet'}</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Main Action Button */}
-            <button
-              onClick={() => handleDownload(selectedQuality)}
-              className="w-full py-3 px-4 rounded-xl bg-white text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-neutral-200 transition-colors shadow-lg active:scale-[0.99]"
-            >
-              <Download className="w-4 h-4 text-black stroke-[2.5]" />
-              <span>Download in uTorrent ({selectedQuality})</span>
-            </button>
-
-            {/* Quick Copy Link Helper */}
-            <div className="flex items-center justify-between text-[11px] text-neutral-500 px-1 pt-1">
-              <span>Supports µTorrent, BitTorrent, qBit</span>
-              <button
-                onClick={handleCopyMagnet}
-                className="text-neutral-400 hover:text-white underline flex items-center gap-1"
-              >
-                {copied ? 'Magnet copied!' : 'Copy Magnet Link'}
-              </button>
-            </div>
+              );
+            })}
           </div>
         </div>
 
