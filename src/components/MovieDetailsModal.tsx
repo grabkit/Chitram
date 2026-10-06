@@ -94,31 +94,39 @@ export const MovieDetailsModal: React.FC<MovieDetailsModalProps> = ({
             <span className="bg-gray-900 border border-gray-800 px-2 py-0.5 rounded font-semibold text-gray-300">
               {movie.year}
             </span>
-            <span className="bg-emerald-950/40 border border-[#39ff14]/30 text-[#39ff14] font-semibold px-2 py-0.5 rounded">
-              {movie.genre.join(', ')}
-            </span>
+            {movie.genre && movie.genre.length > 0 && (
+              <span className="bg-emerald-950/40 border border-[#39ff14]/30 text-[#39ff14] font-semibold px-2 py-0.5 rounded">
+                {movie.genre.join(', ')}
+              </span>
+            )}
           </div>
 
           {/* Synopsis */}
-          <div>
-            <h4 className="text-xs uppercase font-extrabold tracking-wider text-gray-400 mb-1.5">
-              Synopsis & Plot
-            </h4>
-            <p className="text-sm sm:text-base text-gray-200 leading-relaxed">
-              {movie.synopsis}
-            </p>
-          </div>
+          {movie.synopsis && (
+            <div>
+              <h4 className="text-xs uppercase font-extrabold tracking-wider text-gray-400 mb-1.5">
+                Synopsis & Plot
+              </h4>
+              <p className="text-sm sm:text-base text-gray-200 leading-relaxed">
+                {movie.synopsis}
+              </p>
+            </div>
+          )}
 
           {/* Details Table */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-[#131622] p-4 rounded-2xl border border-gray-800/80">
-            <div>
-              <span className="text-gray-400 block mb-0.5 font-bold uppercase text-[10px]">Director</span>
-              <span className="text-white font-semibold text-sm">{movie.director}</span>
-            </div>
-            <div>
-              <span className="text-gray-400 block mb-0.5 font-bold uppercase text-[10px]">Starring</span>
-              <span className="text-white font-semibold text-sm">{movie.cast.join(', ')}</span>
-            </div>
+            {movie.director && (
+              <div>
+                <span className="text-gray-400 block mb-0.5 font-bold uppercase text-[10px]">Director</span>
+                <span className="text-white font-semibold text-sm">{movie.director}</span>
+              </div>
+            )}
+            {movie.cast && movie.cast.length > 0 && (
+              <div>
+                <span className="text-gray-400 block mb-0.5 font-bold uppercase text-[10px]">Starring</span>
+                <span className="text-white font-semibold text-sm">{movie.cast.join(', ')}</span>
+              </div>
+            )}
             <div>
               <span className="text-gray-400 block mb-0.5 font-bold uppercase text-[10px]">Audio Languages</span>
               <span className="text-[#39ff14] font-semibold text-sm">{movie.languages.join(' • ')}</span>

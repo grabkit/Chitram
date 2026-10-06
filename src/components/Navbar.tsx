@@ -1,18 +1,24 @@
 import React from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, Bookmark } from 'lucide-react';
 
 interface NavbarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onHomeClick?: () => void;
   onOpenUpload?: () => void;
+  bookmarksCount?: number;
+  onOpenBookmarks?: () => void;
+  isBookmarksActive?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   searchQuery,
   setSearchQuery,
   onHomeClick,
-  onOpenUpload
+  onOpenUpload,
+  bookmarksCount = 0,
+  onOpenBookmarks,
+  isBookmarksActive = false
 }) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -56,9 +62,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
-          {/* Search Bar on Right */}
-          <div className="flex items-center">
-            <div className="flex items-center bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1 sm:py-1.5 w-44 sm:w-64 focus-within:border-white transition-colors">
+          {/* Search Bar + Bookmark Button on Right */}
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* Search Input */}
+            <div className="flex items-center bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1 sm:py-1.5 w-36 sm:w-60 focus-within:border-white transition-colors">
               <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5 shrink-0" />
               <input
                 type="text"
@@ -74,6 +81,26 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               )}
             </div>
+
+            {/* Bookmark Button right next to Search bar */}
+            <button
+              type="button"
+              onClick={onOpenBookmarks}
+              title="Bookmarks"
+              aria-label="Bookmarks"
+              className={`p-2 rounded-lg border transition-all flex items-center justify-center relative cursor-pointer active:scale-95 ${
+                isBookmarksActive
+                  ? 'bg-white text-black border-white'
+                  : 'bg-neutral-950 border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700'
+              }`}
+            >
+              <Bookmark className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${bookmarksCount > 0 || isBookmarksActive ? 'fill-current' : ''}`} />
+              {bookmarksCount > 0 && !isBookmarksActive && (
+                <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-white text-black text-[9px] font-black flex items-center justify-center">
+                  {bookmarksCount}
+                </span>
+              )}
+            </button>
           </div>
 
         </div>

@@ -10,15 +10,15 @@ export interface Movie {
   title: string;
   teluguTitle?: string;
   year: number;
-  genre: string[];
-  rating: number;
+  genre?: string[];
+  rating?: number;
   duration: string;
   quality: '4K UHD' | '1080p' | 'IMAX 4K';
   posterUrl: string;
   backdropUrl: string;
-  synopsis: string;
-  director: string;
-  cast: string[];
+  synopsis?: string;
+  director?: string;
+  cast?: string[];
   languages: string[];
   downloadSizes: Record<string, string>;
   downloadLinks?: Record<string, string | undefined>;
@@ -26,6 +26,7 @@ export interface Movie {
   extraDownloadOptions?: DownloadOption[];
   videoSampleUrl: string;
   trailerTitle?: string;
+  imdbUrl?: string;
   isCustom?: boolean;
   createdAt?: number;
 }

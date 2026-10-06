@@ -52,17 +52,27 @@ export const StreamModal: React.FC<StreamModalProps> = ({
         <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-black">
           <div>
             <div className="flex items-center gap-2 text-xs text-neutral-400 mb-1">
-              <span className="text-white font-bold">★ {movie.rating}</span>
-              <span>•</span>
+              {movie.rating != null && (
+                <>
+                  <span className="text-white font-bold">★ {movie.rating}</span>
+                  <span>•</span>
+                </>
+              )}
               <span>{movie.duration}</span>
               <span>•</span>
               <span className="text-white font-semibold">{movie.quality}</span>
-              <span>•</span>
-              <span>{movie.genre.join(', ')}</span>
+              {movie.genre && movie.genre.length > 0 && (
+                <>
+                  <span>•</span>
+                  <span>{movie.genre.join(', ')}</span>
+                </>
+              )}
             </div>
-            <p className="text-xs sm:text-sm text-neutral-300 max-w-xl line-clamp-2">
-              {movie.synopsis}
-            </p>
+            {movie.synopsis && (
+              <p className="text-xs sm:text-sm text-neutral-300 max-w-xl line-clamp-2">
+                {movie.synopsis}
+              </p>
+            )}
           </div>
 
           <button

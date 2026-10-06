@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Star, Clock, Download, Check, ExternalLink, RefreshCw, Play, Tv } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { ArrowLeft, Star, Clock, Download, Check, ExternalLink, RefreshCw, Play, Tv, Share2, ChevronDown, Bookmark, Plus, Heart } from 'lucide-react';
 import { Movie, DownloadItem } from '../types';
 import { MovieCard } from './MovieCard';
 import { WebtorPlayer } from './WebtorPlayer';
@@ -10,6 +10,8 @@ interface MovieDetailScreenProps {
   onSelectMovie: (movie: Movie) => void;
   onAddDownload?: (item: DownloadItem) => void;
   trendingMovies: Movie[];
+  isBookmarked?: boolean;
+  onToggleBookmark?: (movie: Movie) => void;
 }
 
 interface VideoSource {
@@ -152,12 +154,56 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
   onBack,
   onSelectMovie,
   onAddDownload,
-  trendingMovies
+  trendingMovies,
+  isBookmarked = false,
+  onToggleBookmark
 }) => {
   const [downloadedQuality, setDownloadedQuality] = useState<string | null>(null);
   const [playerKey, setPlayerKey] = useState<number>(0);
   const [videoError, setVideoError] = useState<boolean>(false);
   const [forceIframe, setForceIframe] = useState<boolean>(false);
+  const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [isDownloadDropdownOpen, setIsDownloadDropdownOpen] = useState<boolean>(false);
+  const [isLiked, setIsLiked] = useState<boolean>(false);
+  const downloadDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close download dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (downloadDropdownRef.current && !downloadDropdownRef.current.contains(event.target as Node)) {
+        setIsDownloadDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: `${movie.title} - Chitram`,
+      text: `Watch and stream ${movie.title} in HD on Chitram!`,
+      url: shareUrl,
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch {
+        // User cancelled or share failed, fallback to copy
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2200);
+    } catch {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2200);
+    }
+  };
 
   // Parse video source (detects Webtor torrent embed, iframe embed or direct HTML5 video)
   const videoSource = useMemo(() => parseVideoSource(movie.videoSampleUrl), [movie.videoSampleUrl]);
@@ -278,10 +324,6 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
   // 5 related trending movies excluding current movie
   const relatedMovies = (trendingMovies || []).filter(m => m && m.id !== movie.id).slice(0, 5);
 
-  const movieGenres = Array.isArray(movie.genre) ? movie.genre.join(', ') : 'Drama';
-  const movieLanguages = Array.isArray(movie.languages) ? movie.languages.join(', ') : 'Telugu';
-  const movieCast = Array.isArray(movie.cast) ? movie.cast.join(', ') : 'Cast';
-
   const magnetUrl = videoSource.magnet || videoSource.url;
   const webtorWebUrl = `https://webtor.io/#/show?magnet=${encodeURIComponent(magnetUrl)}`;
 
@@ -378,127 +420,168 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
         </div>
       </div>
 
-      {/* Two Column Section: Left Info, Right Download Options */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-        
-        {/* Left Column: Movie Info */}
-        <div className="lg:col-span-2 bg-neutral-950 border border-neutral-900 rounded-xl p-5 sm:p-6 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight font-sans">
-                {movie.title}
-              </h1>
-              <p className="text-xs text-neutral-400 mt-0.5">
-                {movieGenres}
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] px-2 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-neutral-200 font-bold">
-                {movie.quality || '4K UHD'}
-              </span>
-              <span className="text-[11px] px-2 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 flex items-center gap-1 font-semibold">
-                <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                {movie.rating ? movie.rating.toFixed(1) : '8.5'}
-              </span>
-            </div>
-          </div>
+      {/* 🌟 NATIVE OTT VIEW (NO CARDS, CLEAN FLUSH HOTSTAR/NETFLIX OTT APP STYLE) 🌟 */}
+      
+      {/* 1. Movie Title & Essential Metadata with IMDb Button */}
+      <div className="pt-3 pb-1.5">
+        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+          {movie.title}
+        </h1>
 
-          <div className="flex flex-wrap items-center gap-4 text-xs text-neutral-400 pt-1">
-            <span>{movie.year}</span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {movie.duration || '2h 30m'}
-            </span>
-            <span>•</span>
-            <span>{movieLanguages}</span>
-          </div>
-
-          <div className="pt-2 border-t border-neutral-900">
-            <h2 className="text-xs uppercase tracking-wider font-bold text-neutral-400 mb-1">
-              Storyline
-            </h2>
-            <p className="text-sm text-neutral-300 leading-relaxed">
-              {movie.synopsis || 'Experience the movie in high-definition streaming and download.'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-neutral-900 text-xs">
-            <div>
-              <span className="text-neutral-500 font-medium">Director: </span>
-              <span className="text-neutral-200 font-semibold">{movie.director || 'Director'}</span>
-            </div>
-            <div>
-              <span className="text-neutral-500 font-medium">Languages: </span>
-              <span className="text-neutral-200 font-semibold">{movieLanguages}</span>
-            </div>
-            <div className="sm:col-span-2">
-              <span className="text-neutral-500 font-medium">Starring: </span>
-              <span className="text-neutral-200 font-semibold">{movieCast}</span>
-            </div>
-          </div>
+        {/* Essential Metadata: Year • Time • Telugu • Quality Badge • IMDb Button */}
+        <div className="flex items-center flex-wrap gap-2 text-xs sm:text-sm text-neutral-400 mt-1.5 mb-1 font-medium">
+          <span>{movie.year}</span>
+          <span>•</span>
+          <span>{movie.duration || '2h 30m'}</span>
+          <span>•</span>
+          <span>Telugu</span>
+          <span>•</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 font-bold uppercase">
+            {movie.quality || '4K UHD'}
+          </span>
+          <span>•</span>
+          {/* Official Yellow IMDb Button redirecting to full IMDb movie details */}
+          <a
+            href={
+              movie.imdbUrl && movie.imdbUrl.trim()
+                ? (movie.imdbUrl.startsWith('http') ? movie.imdbUrl : `https://${movie.imdbUrl}`)
+                : `https://www.imdb.com/find/?q=${encodeURIComponent(movie.title)}`
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-[3px] bg-[#F5C518] hover:bg-[#e2b616] text-black font-black text-[9px] tracking-tight transition-all shadow-xs cursor-pointer active:scale-95 leading-none"
+            title="View complete details, cast & reviews on IMDb"
+          >
+            <span>IMDb</span>
+            <ExternalLink className="w-2 h-2 stroke-[2.5]" />
+          </a>
         </div>
-
-        {/* Right Column: Clean Download Links List with Download Button */}
-        <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-5 flex flex-col justify-start">
-          <p className="text-xs text-neutral-400 mb-4">
-            Select resolution to download.
-          </p>
-
-          {/* Quality Options Rows */}
-          <div className="space-y-2.5">
-            {allDownloadOptions.map((opt) => {
-              const isDownloaded = downloadedQuality === opt.quality;
-              return (
-                <div
-                  key={opt.id}
-                  className="w-full flex items-center justify-between p-3 rounded-xl border border-neutral-900 bg-black text-xs text-neutral-300 transition-colors"
-                >
-                  {/* Left: Video Quality */}
-                  <div className="min-w-0 pr-2">
-                    <span className="font-semibold text-neutral-400 text-xs sm:text-sm block truncate">
-                      {opt.label}
-                    </span>
-                  </div>
-
-                  {/* Right: File Size + Normal Download Button */}
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    <span className="text-neutral-400 text-[11px] sm:text-xs font-semibold bg-neutral-950 px-2.5 py-1 rounded border border-neutral-900">
-                      {opt.size}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadFile(opt)}
-                      title={`Download ${opt.quality}`}
-                      aria-label={`Download ${opt.quality}`}
-                      className={`p-2 rounded-lg border transition-all cursor-pointer flex items-center justify-center ${
-                        isDownloaded
-                          ? 'bg-emerald-950/90 border-emerald-500 text-emerald-400 shadow-sm'
-                          : 'bg-white hover:bg-neutral-200 border-white text-black active:scale-95'
-                      }`}
-                    >
-                      {isDownloaded ? (
-                        <Check className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
-                      ) : (
-                        <Download className="w-4 h-4 text-black stroke-[2.5]" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
       </div>
 
-      {/* More Movies Row (5 posters per row) */}
+      {/* 2. Native OTT Action Buttons Row (Watchlist, Download, Share, Rate) - Flush, No Cards */}
+      <div className="flex items-center justify-around sm:justify-start sm:gap-12 py-3 my-2 border-y border-neutral-900/60">
+        {/* Watchlist */}
+        <button
+          type="button"
+          onClick={() => onToggleBookmark?.(movie)}
+          className="flex flex-col items-center gap-1.5 text-neutral-300 hover:text-white transition-colors cursor-pointer group active:scale-95"
+          title={isBookmarked ? 'In Watchlist' : 'Add to Watchlist'}
+        >
+          {isBookmarked ? (
+            <Check className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 stroke-[2.5]" />
+          ) : (
+            <Plus className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2] group-hover:scale-110 transition-transform" />
+          )}
+          <span className="text-[10px] sm:text-xs font-medium tracking-tight">
+            {isBookmarked ? 'Watchlisted' : 'Watchlist'}
+          </span>
+        </button>
+
+        {/* Download with Dropdown */}
+        <div className="relative" ref={downloadDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setIsDownloadDropdownOpen(prev => !prev)}
+            className="flex flex-col items-center gap-1.5 text-neutral-300 hover:text-white transition-colors cursor-pointer group active:scale-95"
+            title="Download Movie"
+          >
+            <Download className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2] group-hover:scale-110 transition-transform" />
+            <span className="text-[10px] sm:text-xs font-medium tracking-tight flex items-center gap-0.5">
+              Download
+            </span>
+          </button>
+
+          {/* Quality Dropdown Menu with uTorrent Icon */}
+          {isDownloadDropdownOpen && (
+            <div className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 mt-3 w-64 sm:w-72 rounded-xl bg-neutral-900 border border-neutral-800 shadow-2xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-3 py-2 border-b border-neutral-800/80 mb-1">
+                <p className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider">Select Download Quality</p>
+                <p className="text-[10px] text-neutral-500">Choose resolution to begin download</p>
+              </div>
+              <div className="space-y-1">
+                {allDownloadOptions.map((opt) => {
+                  const isDownloaded = downloadedQuality === opt.quality;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        handleDownloadFile(opt);
+                        setIsDownloadDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-neutral-800/90 text-left transition-colors cursor-pointer group/opt"
+                    >
+                      {/* Left Side: Torrent Icon + Quality Label */}
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <img
+                          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjVd0GxoHYBtIoohsVY9UbdNeg2p6PTAC_tf784XzxPrGUvvyhJiRGGxgibxZUT22nePS_RCn9Yv9xTCciMtfkoo7RCCrWgco84mSwS5b18J1pnb7Q3mDaE3s3wq0nb2XI3-88ZxsiQs8sx5buuhvBjI6re7UwcftTR4E1fOWb-eTghQlQEHsIEwPlZHsZW/s0/ut2939ue0c-utorrent-logo-utorrent-logo-social-social-media-torrent-icon-free-download.png"
+                          alt="Torrent"
+                          className="w-5 h-5 rounded-xs object-contain shrink-0"
+                        />
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-semibold text-white group-hover/opt:text-emerald-400 transition-colors truncate">
+                            {opt.label}
+                          </span>
+                          <span className="text-[10px] text-neutral-400">{opt.quality} Video</span>
+                        </div>
+                      </div>
+
+                      {/* Right Side: Size & Download status icon */}
+                      <div className="flex items-center gap-2 shrink-0 ml-2">
+                        <span className="text-[10px] font-mono text-neutral-300 bg-neutral-950 px-2 py-0.5 rounded border border-neutral-800">
+                          {opt.size}
+                        </span>
+                        {isDownloaded ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5 text-neutral-500 group-hover/opt:text-white transition-colors" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Share */}
+        <button
+          type="button"
+          onClick={handleShare}
+          className="flex flex-col items-center gap-1.5 text-neutral-300 hover:text-white transition-colors cursor-pointer group active:scale-95"
+          title="Share Movie"
+        >
+          {isCopied ? (
+            <Check className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 stroke-[2.5]" />
+          ) : (
+            <Share2 className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2] group-hover:scale-110 transition-transform" />
+          )}
+          <span className={`text-[10px] sm:text-xs font-medium tracking-tight ${isCopied ? 'text-emerald-400 font-bold' : ''}`}>
+            {isCopied ? 'Copied' : 'Share'}
+          </span>
+        </button>
+
+        {/* Rate */}
+        <button
+          type="button"
+          onClick={() => setIsLiked(prev => !prev)}
+          className="flex flex-col items-center gap-1.5 text-neutral-300 hover:text-white transition-colors cursor-pointer group active:scale-95"
+          title="Rate / Like"
+        >
+          <Heart className={`w-5 h-5 sm:w-6 sm:h-6 stroke-[2] group-hover:scale-110 transition-transform ${isLiked ? 'fill-red-500 text-red-500 stroke-red-500' : ''}`} />
+          <span className={`text-[10px] sm:text-xs font-medium tracking-tight ${isLiked ? 'text-red-400 font-bold' : ''}`}>
+            {isLiked ? 'Liked' : 'Rate'}
+          </span>
+        </button>
+      </div>
+
+      {/* 3. "More Like This" Section (Native OTT without card borders) */}
       {relatedMovies.length > 0 && (
-        <section className="pt-2 border-t border-neutral-900">
+        <section className="pt-3 pb-8">
           <div className="mb-3 px-0.5">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
-              More Movies
+              More Like This
             </h2>
           </div>
           <div className="grid grid-cols-5 gap-y-3.5 sm:gap-y-5 gap-x-1.5 sm:gap-x-3 md:gap-x-4">

@@ -19,14 +19,9 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
 
   const [title, setTitle] = useState('');
   const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [rating, setRating] = useState<number>(9.0);
   const [duration, setDuration] = useState('2h 45m');
   const [quality, setQuality] = useState<'4K UHD' | '1080p' | 'IMAX 4K'>('4K UHD');
-  const [genres, setGenres] = useState('Action, Thriller');
-  const [director, setDirector] = useState('');
-  const [cast, setCast] = useState('');
-  const [languages, setLanguages] = useState('Telugu, Hindi, English');
-  const [synopsis, setSynopsis] = useState('');
+  const [imdbUrl, setImdbUrl] = useState('');
   
   // Media
   const [posterUrl, setPosterUrl] = useState('');
@@ -70,14 +65,9 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
     setEditingMovieId(m.id);
     setTitle(m.title || '');
     setYear(m.year || new Date().getFullYear());
-    setRating(m.rating || 9.0);
     setDuration(m.duration || '2h 30m');
     setQuality(m.quality || '4K UHD');
-    setGenres(Array.isArray(m.genre) ? m.genre.join(', ') : 'Action');
-    setDirector(m.director || '');
-    setCast(Array.isArray(m.cast) ? m.cast.join(', ') : '');
-    setLanguages(Array.isArray(m.languages) ? m.languages.join(', ') : 'Telugu');
-    setSynopsis(m.synopsis || '');
+    setImdbUrl(m.imdbUrl || '');
     setPosterUrl(m.posterUrl || '');
     setBackdropUrl(m.backdropUrl || '');
     setVideoUrl(m.videoSampleUrl || '');
@@ -118,9 +108,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
   const handleCancelEdit = () => {
     setEditingMovieId(null);
     setTitle('');
-    setDirector('');
-    setCast('');
-    setSynopsis('');
+    setImdbUrl('');
     setPosterUrl('');
     setBackdropUrl('');
     setVideoUrl('');
@@ -220,14 +208,10 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
         id: movieId,
         title: title.trim(),
         year: Number(year) || new Date().getFullYear(),
-        rating: Number(rating) || 8.5,
         duration: duration.trim() || '2h 30m',
         quality,
-        genre: genres.split(',').map(g => g.trim()).filter(Boolean),
-        director: director.trim() || 'Director',
-        cast: cast.split(',').map(c => c.trim()).filter(Boolean),
-        languages: languages.split(',').map(l => l.trim()).filter(Boolean),
-        synopsis: synopsis.trim() || `${title} is now streaming in high definition.`,
+        languages: ['Telugu'],
+        imdbUrl: imdbUrl.trim() || undefined,
         posterUrl: finalPoster,
         backdropUrl: finalBackdrop,
         videoSampleUrl: finalVideo,
@@ -246,9 +230,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
 
       // Reset Form
       setTitle('');
-      setDirector('');
-      setCast('');
-      setSynopsis('');
+      setImdbUrl('');
       setPosterUrl('');
       setBackdropUrl('');
       setVideoUrl('');
@@ -376,23 +358,9 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               />
             </div>
 
-            {/* Rating */}
+            {/* Duration / Time */}
             <div>
-              <label className="block text-neutral-400 font-semibold mb-1">IMDb Rating (e.g. 8.6)</label>
-              <input
-                type="number"
-                step="0.1"
-                min="1"
-                max="10"
-                value={rating}
-                onChange={(e) => setRating(Number(e.target.value))}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white"
-              />
-            </div>
-
-            {/* Duration */}
-            <div>
-              <label className="block text-neutral-400 font-semibold mb-1">Duration</label>
+              <label className="block text-neutral-400 font-semibold mb-1">Duration / Time</label>
               <input
                 type="text"
                 placeholder="2h 45m"
@@ -404,7 +372,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
 
             {/* Quality Badge */}
             <div>
-              <label className="block text-neutral-400 font-semibold mb-1">Header Quality Badge</label>
+              <label className="block text-neutral-400 font-semibold mb-1">Quality Badge</label>
               <select
                 value={quality}
                 onChange={(e) => setQuality(e.target.value as any)}
@@ -416,63 +384,27 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               </select>
             </div>
 
-            {/* Genres */}
+            {/* Language Note */}
             <div>
-              <label className="block text-neutral-400 font-semibold mb-1">Genres (comma separated)</label>
-              <input
-                type="text"
-                placeholder="Action, Thriller, Drama"
-                value={genres}
-                onChange={(e) => setGenres(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
-              />
+              <label className="block text-neutral-400 font-semibold mb-1">Language</label>
+              <div className="w-full bg-black/60 border border-neutral-800/80 rounded-lg px-3 py-2 text-neutral-300 flex items-center justify-between">
+                <span className="font-semibold text-white">Telugu</span>
+                <span className="text-[10px] text-neutral-500 uppercase font-mono">Always Telugu</span>
+              </div>
             </div>
 
-            {/* Director */}
-            <div>
-              <label className="block text-neutral-400 font-semibold mb-1">Director</label>
-              <input
-                type="text"
-                placeholder="e.g. Prashanth Neel"
-                value={director}
-                onChange={(e) => setDirector(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
-              />
-            </div>
-
-            {/* Languages */}
+            {/* IMDb Link (Optional) */}
             <div className="sm:col-span-2">
-              <label className="block text-neutral-400 font-semibold mb-1">Languages (comma separated)</label>
+              <label className="block text-neutral-400 font-semibold mb-1 flex items-center justify-between">
+                <span>IMDb Link (Optional)</span>
+                <span className="text-[10px] text-neutral-500 font-normal">If blank, defaults to IMDb search</span>
+              </label>
               <input
-                type="text"
-                placeholder="Telugu, Hindi, Tamil, Malayalam"
-                value={languages}
-                onChange={(e) => setLanguages(e.target.value)}
+                type="url"
+                placeholder="https://www.imdb.com/title/tt... or leave blank"
+                value={imdbUrl}
+                onChange={(e) => setImdbUrl(e.target.value)}
                 className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
-              />
-            </div>
-
-            {/* Cast */}
-            <div className="sm:col-span-2">
-              <label className="block text-neutral-400 font-semibold mb-1">Star Cast (comma separated)</label>
-              <input
-                type="text"
-                placeholder="Prabhas, Prithviraj, Shruti Haasan"
-                value={cast}
-                onChange={(e) => setCast(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white"
-              />
-            </div>
-
-            {/* Synopsis */}
-            <div className="sm:col-span-2">
-              <label className="block text-neutral-400 font-semibold mb-1">Storyline / Synopsis</label>
-              <textarea
-                rows={3}
-                placeholder="Enter storyline summary..."
-                value={synopsis}
-                onChange={(e) => setSynopsis(e.target.value)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white resize-none"
               />
             </div>
 

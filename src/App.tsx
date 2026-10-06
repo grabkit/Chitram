@@ -5,6 +5,7 @@ import { MovieCard } from './components/MovieCard';
 import { MovieDetailScreen } from './components/MovieDetailScreen';
 import { UploadMovieScreen } from './components/UploadMovieScreen';
 import { DownloadsDrawer } from './components/DownloadsDrawer';
+import { BookmarksScreen } from './components/BookmarksScreen';
 import { Footer } from './components/Footer';
 import { ALL_CATALOG_MOVIES } from './data/movies';
 import { Movie, DownloadItem } from './types';
@@ -142,11 +143,53 @@ export default function App() {
     }
   }, [downloads]);
 
+  // Bookmarks persistence (safe parsing & saving)
+  const [bookmarks, setBookmarks] = useState<Movie[]>(() => {
+    try {
+      const saved = localStorage.getItem('chitram_bookmarks');
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('chitram_bookmarks', JSON.stringify(bookmarks));
+    } catch (err) {
+      console.warn('Failed to save bookmarks:', err instanceof Error ? err.message : String(err));
+    }
+  }, [bookmarks]);
+
+  const handleToggleBookmark = (movieToToggle: Movie) => {
+    setBookmarks(prev => {
+      const exists = prev.some(m => m.id === movieToToggle.id);
+      if (exists) {
+        return prev.filter(m => m.id !== movieToToggle.id);
+      } else {
+        return [movieToToggle, ...prev];
+      }
+    });
+  };
+
+  const handleRemoveBookmark = (movieId: string) => {
+    setBookmarks(prev => prev.filter(m => m.id !== movieId));
+  };
+
+  const handleClearAllBookmarks = () => {
+    setBookmarks([]);
+  };
+
   // Reset to page 1 and clear selected movie on new search
   const handleSearchChange = (query: string) => {
     if (query.trim() === 'Prems@3738') {
       setIsUploadScreenOpen(true);
       setSelectedMovie(null);
+      setIsBookmarksOpen(false);
       setSearchQuery('');
       return;
     }
@@ -156,12 +199,14 @@ export default function App() {
     if (query.trim()) {
       setSelectedMovie(null);
       setIsUploadScreenOpen(false);
+      setIsBookmarksOpen(false);
     }
   };
 
   const handleOpenUpload = () => {
     setIsUploadScreenOpen(true);
     setSelectedMovie(null);
+    setIsBookmarksOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -235,12 +280,14 @@ export default function App() {
   const handleSelectMovie = (movie: Movie) => {
     setSelectedMovie(movie);
     setIsUploadScreenOpen(false);
+    setIsBookmarksOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBackToCatalog = () => {
     setSelectedMovie(null);
     setIsUploadScreenOpen(false);
+    setIsBookmarksOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -274,13 +321,23 @@ export default function App() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 flex flex-col font-sans selection:bg-white selection:text-black">
       
-      {/* Top Navigation Bar */}
-      <Navbar
-        searchQuery={searchQuery}
-        setSearchQuery={handleSearchChange}
-        onHomeClick={handleBackToCatalog}
-        onOpenUpload={handleOpenUpload}
-      />
+      {/* Top Navigation Bar - Hidden on Movie Streaming, Bookmarks, and Upload views */}
+      {!selectedMovie && !isBookmarksOpen && !isUploadScreenOpen && (
+        <Navbar
+          searchQuery={searchQuery}
+          setSearchQuery={handleSearchChange}
+          onHomeClick={handleBackToCatalog}
+          onOpenUpload={handleOpenUpload}
+          bookmarksCount={bookmarks.length}
+          onOpenBookmarks={() => {
+            setIsBookmarksOpen(true);
+            setSelectedMovie(null);
+            setIsUploadScreenOpen(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          isBookmarksActive={isBookmarksOpen}
+        />
+      )}
 
       <main className="flex-1">
         
@@ -292,14 +349,28 @@ export default function App() {
             customMovies={creatorMoviesList}
             onDeleteCustomMovie={handleDeleteCustomMovie}
           />
+        ) : isBookmarksOpen ? (
+          /* VIEW 2: Dedicated Bookmarks Screen */
+          <BookmarksScreen
+            bookmarks={bookmarks}
+            onSelectMovie={(movie) => {
+              setIsBookmarksOpen(false);
+              handleSelectMovie(movie);
+            }}
+            onRemoveBookmark={handleRemoveBookmark}
+            onBack={handleBackToCatalog}
+            onClearAllBookmarks={handleClearAllBookmarks}
+          />
         ) : selectedMovie ? (
-          /* VIEW 2: Dedicated Movie Detail & Player Screen */
+          /* VIEW 3: Dedicated Movie Detail & Player Screen */
           <MovieDetailScreen
             movie={selectedMovie}
             onBack={handleBackToCatalog}
             onSelectMovie={handleSelectMovie}
             onAddDownload={handleAddDownload}
             trendingMovies={allMovies}
+            isBookmarked={bookmarks.some(b => b.id === selectedMovie.id)}
+            onToggleBookmark={handleToggleBookmark}
           />
         ) : (
           /* VIEW 3: Standard Home & Trending Catalog */
