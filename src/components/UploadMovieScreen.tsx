@@ -369,20 +369,6 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               />
             </div>
 
-            {/* Quality Badge */}
-            <div>
-              <label className="block text-neutral-400 font-semibold mb-1">Quality Badge</label>
-              <select
-                value={quality}
-                onChange={(e) => setQuality(e.target.value as any)}
-                className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white"
-              >
-                <option value="4K UHD">4K UHD</option>
-                <option value="1080p">1080p Full HD</option>
-                <option value="IMAX 4K">IMAX 4K</option>
-              </select>
-            </div>
-
             {/* Language Note */}
             <div>
               <label className="block text-neutral-400 font-semibold mb-1">Language</label>
