@@ -28,6 +28,7 @@ export interface Movie {
   downloadUrl?: string;
   trailerTitle?: string;
   imdbUrl?: string;
+  isDubbed?: boolean;
   isCustom?: boolean;
   createdAt?: number;
 }

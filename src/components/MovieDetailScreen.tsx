@@ -175,11 +175,10 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
     title: string;
     message: string;
   } | null>(null);
-  const hasStartedPlayingRef = useRef<boolean>(false);
-
   useEffect(() => {
-    hasStartedPlayingRef.current = false;
-  }, [movie.id, playerKey]);
+    setVideoError(false);
+    setForceIframe(false);
+  }, [movie.id]);
 
   useEffect(() => {
     return () => {
@@ -222,6 +221,7 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
 
   const handleReloadPlayer = () => {
     setVideoError(false);
+    setForceIframe(false);
     setPlayerKey(prev => prev + 1);
   };
 
@@ -399,6 +399,9 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
   // 5 related trending movies excluding current movie
   const relatedMovies = (trendingMovies || []).filter(m => m && m.id !== movie.id).slice(0, 5);
 
+  // Dubbed movies: all movies marked with isDubbed in Creator Studio (excluding current movie)
+  const dubbedMovies = (trendingMovies || []).filter(m => m && m.isDubbed && m.id !== movie.id);
+
   const magnetUrl = videoSource.magnet || videoSource.url;
   const webtorWebUrl = `https://webtor.io/#/show?magnet=${encodeURIComponent(magnetUrl)}`;
 
@@ -431,12 +434,20 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
 
       {/* Main Video Streaming Player (Supports Webtor Native SDK, Iframe Embed, and Direct HTML5 Video) */}
       <div className="w-full bg-black rounded-xl overflow-hidden border border-neutral-900 shadow-2xl mb-6 relative">
-        <div className="relative aspect-video w-full bg-black flex items-center justify-center">
+        <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
+          {/* Ambient blurred movie poster in player background */}
+          <img
+            src={movie.backdropUrl || movie.posterUrl}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover filter blur-xl opacity-25 pointer-events-none scale-105"
+          />
+
           {videoSource.type === 'webtor' ? (
             <WebtorPlayer
               key={`webtor-${movie.id}-${playerKey}`}
               magnet={videoSource.magnet || videoSource.url}
               dataPath={videoSource.dataPath}
+              poster={movie.backdropUrl || movie.posterUrl}
               title={movie.title}
               onReload={handleReloadPlayer}
             />
@@ -445,13 +456,13 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
               key={`iframe-${videoSource.url}-${playerKey}`}
               src={videoSource.url}
               title={`${movie.title} Stream`}
-              className="w-full h-full border-0 absolute inset-0"
+              className="w-full h-full border-0 absolute inset-0 z-10"
               referrerPolicy="no-referrer"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
               allowFullScreen
             />
           ) : videoError ? (
-            <div className="flex flex-col items-center justify-center p-6 text-center space-y-3">
+            <div className="flex flex-col items-center justify-center p-6 text-center space-y-3 relative z-10">
               <div className="w-12 h-12 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-amber-400">
                 <Tv className="w-6 h-6" />
               </div>
@@ -462,7 +473,7 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
               <div className="flex items-center gap-2 pt-2">
                 <button
                   onClick={() => setForceIframe(true)}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-bold text-xs hover:bg-emerald-400 transition-colors flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-bold text-xs hover:bg-emerald-400 transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <Play className="w-3.5 h-3.5 fill-black" />
                   <span>Switch to Embed Player</span>
@@ -481,27 +492,13 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
           ) : (
             <video
               key={`video-${videoSource.url}-${playerKey}`}
-              src={
-                videoSource.url.includes('#')
-                  ? videoSource.url
-                  : `${videoSource.url}#t=600`
-              }
+              src={videoSource.url}
+              poster={movie.backdropUrl || movie.posterUrl}
               controls
               playsInline
               preload="metadata"
-              className="w-full h-full object-contain bg-black"
+              className="w-full h-full object-contain relative z-10 bg-transparent"
               onError={() => setVideoError(true)}
-              onPlay={(e) => {
-                const vid = e.currentTarget;
-                if (!hasStartedPlayingRef.current) {
-                  hasStartedPlayingRef.current = true;
-                  // If video is at preview timestamp (around 10 mins), start playing from beginning
-                  if (vid.currentTime >= 590) {
-                    vid.currentTime = 0;
-                    vid.play().catch(() => {});
-                  }
-                }
-              }}
             >
               Your browser does not support the video tag.
             </video>
@@ -528,6 +525,14 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
           <span className="text-[10px] px-1.5 py-0.2 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 font-bold uppercase">
             {movie.quality || '4K UHD'}
           </span>
+          {movie.isDubbed && (
+            <>
+              <span>•</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold uppercase">
+                Dubbed
+              </span>
+            </>
+          )}
           <span>•</span>
           {/* Official Yellow IMDb Button redirecting to full IMDb movie details */}
           <a
@@ -669,6 +674,29 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
               <MovieCard
                 key={relMovie.id}
                 movie={relMovie}
+                onSelect={onSelectMovie}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 4. "Dubbed" Section (Shows all movies that have Dubbed label ON from Creator Studio) */}
+      {dubbedMovies.length > 0 && (
+        <section className="pt-2 pb-8">
+          <div className="mb-3 px-0.5 flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              <span>Dubbed</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 uppercase">
+                Telugu Dubbed
+              </span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-5 gap-y-3.5 sm:gap-y-5 gap-x-1.5 sm:gap-x-3 md:gap-x-4">
+            {dubbedMovies.map((dubMovie) => (
+              <MovieCard
+                key={`dubbed-${dubMovie.id}`}
+                movie={dubMovie}
                 onSelect={onSelectMovie}
               />
             ))}

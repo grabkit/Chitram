@@ -22,6 +22,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
   const [duration, setDuration] = useState('2h 45m');
   const [quality, setQuality] = useState<'4K UHD' | '1080p' | 'IMAX 4K'>('4K UHD');
   const [imdbUrl, setImdbUrl] = useState('');
+  const [isDubbed, setIsDubbed] = useState(false);
   
   // Media
   const [posterUrl, setPosterUrl] = useState('');
@@ -69,6 +70,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
     setDuration(m.duration || '2h 30m');
     setQuality(m.quality || '4K UHD');
     setImdbUrl(m.imdbUrl || '');
+    setIsDubbed(Boolean(m.isDubbed));
     setPosterUrl(m.posterUrl || '');
     setBackdropUrl(m.backdropUrl || '');
     setVideoUrl(m.videoSampleUrl || '');
@@ -111,6 +113,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
     setEditingMovieId(null);
     setTitle('');
     setImdbUrl('');
+    setIsDubbed(false);
     setPosterUrl('');
     setBackdropUrl('');
     setVideoUrl('');
@@ -217,6 +220,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
         downloadSizes: downloadSizesMap,
         downloadLinks: downloadLinksMap,
         downloadOptions: validOptions,
+        isDubbed: Boolean(isDubbed),
         isCustom: true,
         createdAt: editingMovieId
           ? (customMovies.find(m => m.id === editingMovieId)?.createdAt || Date.now())
@@ -230,6 +234,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
       // Reset Form
       setTitle('');
       setImdbUrl('');
+      setIsDubbed(false);
       setPosterUrl('');
       setBackdropUrl('');
       setVideoUrl('');
@@ -402,6 +407,34 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
               />
             </div>
 
+            {/* Dubbed Movie Toggle */}
+            <div className="sm:col-span-2 pt-1">
+              <label className="flex items-center justify-between p-3.5 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-neutral-700 cursor-pointer transition-colors">
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white text-xs sm:text-sm">Dubbed Movie (Telugu Dubbed)</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      isDubbed ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'bg-neutral-800 text-neutral-400'
+                    }`}>
+                      {isDubbed ? 'DUBBED ON' : 'OFF'}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-neutral-400 mt-1">
+                    Turn this ON to mark this movie as a Dubbed movie. It will show in the dedicated "Dubbed" section!
+                  </span>
+                </div>
+                <div className="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                  <input
+                    type="checkbox"
+                    checked={isDubbed}
+                    onChange={(e) => setIsDubbed(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                </div>
+              </label>
+            </div>
+
           </div>
         </div>
 
@@ -540,7 +573,14 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
                     <img src={custMovie.posterUrl} alt={custMovie.title} className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-white">{custMovie.title || 'Untitled'} ({custMovie.year || 2024})</h4>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h4 className="font-bold text-white">{custMovie.title || 'Untitled'} ({custMovie.year || 2024})</h4>
+                      {custMovie.isDubbed && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold uppercase">
+                          Dubbed
+                        </span>
+                      )}
+                    </div>
                     <span className="text-neutral-400">
                       {Array.isArray(custMovie.genre) ? custMovie.genre.join(', ') : 'Action'} • {custMovie.quality || '4K UHD'}
                     </span>

@@ -69,6 +69,7 @@ export function subscribeToGlobalMovies(
               downloadLinks: rawDownloadLinks,
               downloadOptions: options,
               extraDownloadOptions: Array.isArray(data.extraDownloadOptions) ? data.extraDownloadOptions : undefined,
+              isDubbed: Boolean(data.isDubbed),
               isCustom: true,
               createdAt: timestamp
             });
@@ -160,6 +161,7 @@ export async function publishMovieToFirestore(movie: Movie): Promise<void> {
     downloadLinks: cleanLinks,
     downloadOptions: cleanOptions,
     extraDownloadOptions: Array.isArray(movie.extraDownloadOptions) ? movie.extraDownloadOptions : [],
+    isDubbed: Boolean(movie.isDubbed),
     createdAt: Number(movie.createdAt) || Date.now()
   };
 

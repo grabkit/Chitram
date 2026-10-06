@@ -375,8 +375,10 @@ export default function App() {
         ) : (
           /* VIEW 3: Standard Home & Trending Catalog */
           <>
-            {/* Main Heading "Chitram" title and description */}
-            {!searchQuery && <HeroSection />}
+            {/* Hero Title & Description (max-width: 80%) */}
+            {!searchQuery && (
+              <HeroSection />
+            )}
 
             {/* Search Results Notice */}
             {searchQuery && (
