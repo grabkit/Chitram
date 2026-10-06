@@ -380,8 +380,8 @@ export default function App() {
 
             {/* Search Results Notice */}
             {searchQuery && (
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-1">
-                <div className="flex items-center justify-between text-xs text-neutral-300 bg-neutral-950 p-2.5 rounded-lg border border-neutral-800">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+                <div className="flex items-center justify-between text-xs text-neutral-300 bg-neutral-950 p-3 rounded-lg border border-neutral-800">
                   <span>Showing results for: <strong className="text-white">"{searchQuery}"</strong> ({filteredMovies.length} found)</span>
                   <button 
                     onClick={() => setSearchQuery('')}
@@ -394,9 +394,9 @@ export default function App() {
             )}
 
             {/* Single Section: "Trending" */}
-            <section ref={sectionRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <section ref={sectionRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-12 sm:pb-16">
               
-              <div className="mb-3 px-0.5">
+              <div className="mb-4 px-0.5">
                 <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
                   Trending
                 </h2>

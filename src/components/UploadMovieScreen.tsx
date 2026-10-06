@@ -27,6 +27,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
   const [posterUrl, setPosterUrl] = useState('');
   const [backdropUrl, setBackdropUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState('');
 
   // Dynamic Download Options (Full freedom: custom quality, custom size, add and remove options)
   const [downloadOptions, setDownloadOptions] = useState<DownloadOption[]>([
@@ -71,6 +72,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
     setPosterUrl(m.posterUrl || '');
     setBackdropUrl(m.backdropUrl || '');
     setVideoUrl(m.videoSampleUrl || '');
+    setDownloadUrl(m.downloadUrl || m.downloadOptions?.[0]?.url || m.downloadLinks?.['4K'] || m.downloadLinks?.['1080p'] || '');
 
     if (m.downloadOptions && m.downloadOptions.length > 0) {
       setDownloadOptions(m.downloadOptions.map(opt => ({
@@ -112,6 +114,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
     setPosterUrl('');
     setBackdropUrl('');
     setVideoUrl('');
+    setDownloadUrl('');
     setDownloadOptions([
       { id: 'opt-4k', quality: '4K Ultra HD', size: '3.8 GB', url: '' },
       { id: 'opt-1080p', quality: '1080p Full HD', size: '1.8 GB', url: '' },
@@ -182,25 +185,20 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
       const finalBackdrop = backdropUrl.trim() || finalPoster;
       const finalVideo = videoUrl.trim() || 'https://www.youtube.com/embed/g3JUbg4v6gc';
 
-      // Filter valid download options (always clean strings, never undefined)
-      const validOptions: DownloadOption[] = downloadOptions
-        .filter(opt => opt.quality && opt.quality.trim().length > 0)
-        .map(opt => ({
-          id: opt.id || `opt-${Date.now()}`,
-          quality: opt.quality.trim(),
-          size: opt.size?.trim() || '1.5 GB',
-          url: opt.url?.trim() || ''
-        }));
+      const cleanDownload = downloadUrl.trim();
 
-      // Build compatibility maps
-      const downloadSizesMap: Record<string, string> = {};
-      const downloadLinksMap: Record<string, string> = {};
-      validOptions.forEach(opt => {
-        downloadSizesMap[opt.quality] = opt.size;
-        if (opt.url && opt.url.trim()) {
-          downloadLinksMap[opt.quality] = opt.url.trim();
+      // Build download options and compatibility maps
+      const validOptions: DownloadOption[] = [
+        {
+          id: 'opt-main',
+          quality,
+          size: '1.8 GB',
+          url: cleanDownload
         }
-      });
+      ];
+
+      const downloadSizesMap: Record<string, string> = { [quality]: '1.8 GB' };
+      const downloadLinksMap: Record<string, string> = cleanDownload ? { [quality]: cleanDownload } : {};
 
       const movieId = editingMovieId || `movie-${Date.now()}-${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
 
@@ -215,6 +213,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
         posterUrl: finalPoster,
         backdropUrl: finalBackdrop,
         videoSampleUrl: finalVideo,
+        downloadUrl: cleanDownload,
         downloadSizes: downloadSizesMap,
         downloadLinks: downloadLinksMap,
         downloadOptions: validOptions,
@@ -234,12 +233,7 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
       setPosterUrl('');
       setBackdropUrl('');
       setVideoUrl('');
-      setDownloadOptions([
-        { id: 'opt-4k', quality: '4K Ultra HD', size: '3.8 GB', url: '' },
-        { id: 'opt-1080p', quality: '1080p Full HD', size: '1.8 GB', url: '' },
-        { id: 'opt-720p', quality: '720p HD', size: '900 MB', url: '' },
-        { id: 'opt-480p', quality: '480p SD', size: '450 MB', url: '' }
-      ]);
+      setDownloadUrl('');
 
       setTimeout(() => {
         setPublishedSuccess(false);
@@ -479,149 +473,34 @@ export const UploadMovieScreen: React.FC<UploadMovieScreenProps> = ({
           </div>
         </div>
 
-        {/* Section 3: Fully Customizable Download Options (Edit Quality, File Size, Add & Remove) */}
+        {/* Section 3: Movie Download Link */}
         <div className="bg-neutral-950 border border-neutral-900 rounded-xl p-4 sm:p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <LinkIcon className="w-4 h-4 text-white" />
-                <span>3. Download Options ({downloadOptions.length})</span>
-              </h2>
-              <p className="text-[11px] text-neutral-400 mt-0.5">
-                Customize quality names, file sizes, and download links. Add or remove options as needed.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => handleAddOption()}
-              className="self-start sm:self-auto px-3.5 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Add Option</span>
-            </button>
+          <div>
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <LinkIcon className="w-4 h-4 text-white" />
+              <span>3. Movie Download Link</span>
+            </h2>
+            <p className="text-[11px] text-neutral-400 mt-0.5">
+              Paste the download link for the movie. When users click Download on the streaming page, a 3-second loading spinner runs and this link downloads directly.
+            </p>
           </div>
 
-          {/* Quick Preset Buttons */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <span className="text-[10px] uppercase font-bold text-neutral-500 mr-1">Quick Add:</span>
-            <button
-              type="button"
-              onClick={() => handleAddOption({ quality: '4K Ultra HD', size: '3.8 GB' })}
-              className="px-2 py-0.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[11px] text-neutral-300 hover:text-white transition-colors cursor-pointer"
-            >
-              + 4K Ultra HD
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddOption({ quality: '1080p Full HD', size: '1.8 GB' })}
-              className="px-2 py-0.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[11px] text-neutral-300 hover:text-white transition-colors cursor-pointer"
-            >
-              + 1080p Full HD
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddOption({ quality: '720p HD', size: '900 MB' })}
-              className="px-2 py-0.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[11px] text-neutral-300 hover:text-white transition-colors cursor-pointer"
-            >
-              + 720p HD
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddOption({ quality: '480p SD', size: '450 MB' })}
-              className="px-2 py-0.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[11px] text-neutral-300 hover:text-white transition-colors cursor-pointer"
-            >
-              + 480p SD
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddOption({ quality: '1080p HEVC Dual Audio', size: '1.2 GB' })}
-              className="px-2 py-0.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[11px] text-neutral-300 hover:text-white transition-colors cursor-pointer"
-            >
-              + HEVC Dual Audio
-            </button>
+          <div>
+            <label className="block text-neutral-300 font-semibold mb-1 flex items-center justify-between text-xs">
+              <span>Movie Download URL (Direct MP4, Google Drive, or Magnet)</span>
+              <span className="text-[10px] text-emerald-400 font-normal">Direct MP4/Drive links download with zero apps needed</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. https://... direct .mp4 or Google Drive link or magnet:?xt=urn:..."
+              value={downloadUrl}
+              onChange={(e) => setDownloadUrl(e.target.value)}
+              className="w-full bg-black border border-neutral-800 rounded-lg px-3 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-white font-mono text-xs"
+            />
+            <p className="text-[11px] text-neutral-500 mt-1">
+              Note: If left blank, the Download button on the movie page will appear disabled.
+            </p>
           </div>
-
-          {/* Dynamic Download Options List */}
-          {downloadOptions.length === 0 ? (
-            <div className="py-8 text-center border border-dashed border-neutral-800 rounded-xl">
-              <p className="text-xs text-neutral-400">No download options added.</p>
-              <button
-                type="button"
-                onClick={() => handleAddOption()}
-                className="mt-2 text-xs text-white underline hover:text-neutral-300"
-              >
-                Click here to add a download option
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3 pt-2">
-              {downloadOptions.map((opt, idx) => (
-                <div
-                  key={opt.id}
-                  className="p-3.5 rounded-xl bg-black border border-neutral-800 space-y-2.5 relative group hover:border-neutral-700 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-neutral-400">
-                      Option #{idx + 1}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveOption(opt.id)}
-                      title="Remove this option"
-                      className="p-1 rounded text-neutral-500 hover:text-red-400 hover:bg-neutral-900 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                    {/* Quality Name */}
-                    <div className="sm:col-span-2">
-                      <label className="block text-[10px] text-neutral-400 font-semibold mb-1">
-                        Video Quality Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 4K Ultra HD, 1080p Full HD, 720p HD..."
-                        value={opt.quality}
-                        onChange={(e) => handleUpdateOption(opt.id, 'quality', e.target.value)}
-                        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white font-medium"
-                      />
-                    </div>
-
-                    {/* File Size */}
-                    <div>
-                      <label className="block text-[10px] text-neutral-400 font-semibold mb-1">
-                        File Size
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 3.8 GB, 900 MB..."
-                        value={opt.size}
-                        onChange={(e) => handleUpdateOption(opt.id, 'size', e.target.value)}
-                        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white font-medium"
-                      />
-                    </div>
-
-                    {/* Download / Magnet URL */}
-                    <div className="sm:col-span-3">
-                      <label className="block text-[10px] text-neutral-400 font-semibold mb-1">
-                        Download Link or Magnet URI (Optional - auto-generated if left blank)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="magnet:?xt=urn:... or https://... direct download url"
-                        value={opt.url || ''}
-                        onChange={(e) => handleUpdateOption(opt.id, 'url', e.target.value)}
-                        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-white placeholder-neutral-600 focus:outline-none focus:border-white font-mono text-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Submit Publish / Update Button */}

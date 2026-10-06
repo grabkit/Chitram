@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { ArrowLeft, Star, Clock, Download, Check, ExternalLink, RefreshCw, Play, Tv, Share2, ChevronDown, Bookmark, Plus, Heart } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Download, Check, ExternalLink, RefreshCw, Play, Tv, Share2, ChevronDown, Bookmark, Plus, Heart, Loader2 } from 'lucide-react';
 import { Movie, DownloadItem } from '../types';
 import { MovieCard } from './MovieCard';
 import { WebtorPlayer } from './WebtorPlayer';
@@ -158,24 +158,33 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
   isBookmarked = false,
   onToggleBookmark
 }) => {
-  const [downloadedQuality, setDownloadedQuality] = useState<string | null>(null);
   const [playerKey, setPlayerKey] = useState<number>(0);
   const [videoError, setVideoError] = useState<boolean>(false);
   const [forceIframe, setForceIframe] = useState<boolean>(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [isDownloadDropdownOpen, setIsDownloadDropdownOpen] = useState<boolean>(false);
   const [isLiked, setIsLiked] = useState<boolean>(false);
-  const downloadDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // 3-Second Circular Loading Download State
+  const [isDownloadLoading, setIsDownloadLoading] = useState<boolean>(false);
+  const [downloadProgress, setDownloadProgress] = useState<number>(0);
+  const [isDownloadDone, setIsDownloadDone] = useState<boolean>(false);
+  const downloadIntervalRef = useRef<any>(null);
 
-  // Close download dropdown when clicking outside
+  const [downloadNotice, setDownloadNotice] = useState<{
+    loading: boolean;
+    title: string;
+    message: string;
+  } | null>(null);
+  const hasStartedPlayingRef = useRef<boolean>(false);
+
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (downloadDropdownRef.current && !downloadDropdownRef.current.contains(event.target as Node)) {
-        setIsDownloadDropdownOpen(false);
-      }
+    hasStartedPlayingRef.current = false;
+  }, [movie.id, playerKey]);
+
+  useEffect(() => {
+    return () => {
+      if (downloadIntervalRef.current) clearInterval(downloadIntervalRef.current);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleShare = async () => {
@@ -216,109 +225,175 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
     setPlayerKey(prev => prev + 1);
   };
 
-  // Combine custom configured download options or fallback to standard 4K, 1080p, 720p, 480p
-  const allDownloadOptions = useMemo(() => {
-    if (movie.downloadOptions && movie.downloadOptions.length > 0) {
-      return movie.downloadOptions.map(opt => ({
-        id: opt.id,
-        quality: opt.quality,
-        label: opt.quality,
-        size: opt.size,
-        url: opt.url || movie.downloadLinks?.[opt.quality]
-      }));
-    }
-
-    const standardQualities = ['4K', '1080p', '720p', '480p'];
-    const baseOptions = standardQualities.map(q => ({
-      id: q,
-      quality: q,
-      label: q === '4K' ? '4K Ultra HD' : q === '1080p' ? '1080p Full HD' : q === '720p' ? '720p HD' : '480p SD',
-      size: movie.downloadSizes?.[q] || (q === '4K' ? '3.8 GB' : q === '1080p' ? '1.8 GB' : q === '720p' ? '900 MB' : '450 MB'),
-      url: movie.downloadLinks?.[q]
-    }));
-
-    const extraOptions = (movie.extraDownloadOptions || []).map((opt, i) => ({
-      id: opt.id || `extra-${i}`,
-      quality: opt.quality,
-      label: opt.quality,
-      size: opt.size || movie.downloadSizes?.[opt.quality] || '1.5 GB',
-      url: opt.url || movie.downloadLinks?.[opt.quality]
-    }));
-
-    return [...baseOptions, ...extraOptions];
+  // Check if a download link was provided by the creator
+  const hasDownloadLink = useMemo(() => {
+    if (movie.downloadUrl && movie.downloadUrl.trim().length > 0) return true;
+    if (movie.downloadOptions && movie.downloadOptions.some(opt => opt.url && opt.url.trim().length > 0)) return true;
+    if (movie.downloadLinks && Object.values(movie.downloadLinks).some(url => Boolean(url && typeof url === 'string' && url.trim().length > 0))) return true;
+    return false;
   }, [movie]);
 
-  const handleDownloadFile = (opt: { quality: string; size: string; url?: string }) => {
-    const q = opt.quality;
+  const recordDownloadHistory = () => {
+    if (onAddDownload) {
+      const downloadItem: DownloadItem = {
+        id: `${movie.id}-${Date.now()}`,
+        movie,
+        quality: movie.quality || '1080p',
+        size: '1.8 GB',
+        language: 'Telugu',
+        progress: 100,
+        speed: 'Downloaded',
+        status: 'completed',
+        timestamp: Date.now()
+      };
+      onAddDownload(downloadItem);
+    }
+  };
+
+  const executeDirectDownload = async () => {
     try {
-      setDownloadedQuality(q);
-
-      const sizeText = opt.size;
       const safeTitle = (movie.title || 'Movie').replace(/[\s/\\?%*:|"<>]/g, '_');
-      const customLink = opt.url || movie.downloadLinks?.[q];
+      
+      // Target download link priority:
+      // 1. Explicit downloadUrl from Creator Studio
+      // 2. First download option URL
+      // 3. Fallback to active video streaming sample URL
+      const targetLink = (movie.downloadUrl && movie.downloadUrl.trim())
+        || (movie.downloadOptions && movie.downloadOptions[0]?.url && movie.downloadOptions[0].url.trim())
+        || (movie.downloadLinks && Object.values(movie.downloadLinks).find(v => Boolean(v && v.trim())))
+        || (movie.videoSampleUrl && movie.videoSampleUrl.trim())
+        || '';
 
-      // 1. If direct downloadable file URL is provided (http/https video or torrent file)
-      if (customLink && (customLink.startsWith('http://') || customLink.startsWith('https://'))) {
-        const link = document.createElement('a');
-        link.href = customLink;
-        link.download = `${safeTitle}_${movie.year || 2024}_${q.replace(/\s+/g, '_')}.mp4`;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        // 2. Generate and download real .torrent file directly to the user's computer/phone
-        const magnetUri = customLink && customLink.startsWith('magnet:') ? customLink : getMagnetLink(movie, q);
-        const fileName = `${safeTitle}.${movie.year || 2024}.${q.replace(/\s+/g, '_')}.Telugu.WEB-DL-Chitram.torrent`;
-        
-        const torrentContent = `d8:announce41:udp://tracker.opentrackr.org:1337/announce13:announce-listll41:udp://tracker.opentrackr.org:1337/announceel36:udp://open.tracker.cl:1337/announceel44:udp://tracker.openbittorrent.com:6969/announceee7:comment42:Downloaded from Chitram - High Speed Torrents10:created by14:Chitram WebDL13:creation datei${Math.floor(Date.now() / 1000)}e4:infod6:lengthi${q === '4K' ? 4080218931 : q === '1080p' ? 1932735283 : q === '720p' ? 943718400 : 471859200}e4:name${safeTitle.length}:${safeTitle}12:piece lengthi262144e6:pieces20:12345678901234567890ee`;
+      const fileName = `${safeTitle}.${movie.year || 2024}.${(movie.quality || 'HD').replace(/\s+/g, '_')}.mp4`;
 
-        const blob = new Blob([torrentContent], { type: 'application/x-bittorrent' });
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      const triggerDownloadAnchor = (url: string, name: string) => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
 
-        // Also trigger magnet protocol for installed torrent apps
-        try {
-          const magnetAnchor = document.createElement('a');
-          magnetAnchor.href = magnetUri;
-          magnetAnchor.rel = 'noopener noreferrer';
-          document.body.appendChild(magnetAnchor);
-          magnetAnchor.click();
-          document.body.removeChild(magnetAnchor);
-        } catch {
-          // Ignored
+      // CASE 1: Google Drive Link -> Direct download without third-party app
+      if (targetLink.includes('drive.google.com/file/d/')) {
+        const driveMatch = targetLink.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (driveMatch && driveMatch[1]) {
+          const driveDownloadUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+          triggerDownloadAnchor(driveDownloadUrl, fileName);
+
+          setDownloadNotice({
+            loading: false,
+            title: movie.title,
+            message: 'Direct video download started to your device!'
+          });
+          setTimeout(() => setDownloadNotice(null), 4000);
+          recordDownloadHistory();
+          return;
         }
       }
 
-      // 3. Add to Downloads history in app
-      if (onAddDownload) {
-        const downloadItem: DownloadItem = {
-          id: `${movie.id}-${q}-${Date.now()}`,
-          movie,
-          quality: q,
-          size: sizeText,
-          language: 'Telugu / Dual Audio',
-          progress: 100,
-          speed: 'Downloaded',
-          status: 'completed',
-          timestamp: Date.now()
-        };
-        onAddDownload(downloadItem);
+      // CASE 2: Direct Video Link (http/https mp4, mkv, webm, direct streaming URL)
+      if (targetLink.startsWith('http://') || targetLink.startsWith('https://')) {
+        let blobSuccess = false;
+        try {
+          const res = await fetch(targetLink);
+          if (res.ok) {
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+            blobSuccess = true;
+          }
+        } catch {
+          // If CORS prevents fetch, fallback to browser native anchor download below
+        }
+
+        if (!blobSuccess) {
+          triggerDownloadAnchor(targetLink, fileName);
+        }
+
+        setDownloadNotice({
+          loading: false,
+          title: movie.title,
+          message: 'Video file download started to your device!'
+        });
+        setTimeout(() => setDownloadNotice(null), 4000);
+        recordDownloadHistory();
+        return;
       }
 
-      setTimeout(() => {
-        setDownloadedQuality(null);
-      }, 3000);
+      // CASE 3: Magnet Link -> Direct Web Stream Cloud Downloader
+      if (targetLink.startsWith('magnet:') || (!targetLink && getMagnetLink(movie, '1080p'))) {
+        const cleanMagnet = targetLink.startsWith('magnet:') ? targetLink : getMagnetLink(movie, '1080p');
+
+        // Open Webtor Cloud Web Player / Direct Downloader in browser tab
+        const webStreamDownloadUrl = `https://webtor.io/#/show?magnet=${encodeURIComponent(cleanMagnet)}`;
+        window.open(webStreamDownloadUrl, '_blank', 'noopener,noreferrer');
+
+        // Also trigger magnet protocol for users who have uTorrent installed
+        try {
+          const magnetAnchor = document.createElement('a');
+          magnetAnchor.href = cleanMagnet;
+          document.body.appendChild(magnetAnchor);
+          magnetAnchor.click();
+          document.body.removeChild(magnetAnchor);
+        } catch {}
+
+        setDownloadNotice({
+          loading: false,
+          title: movie.title,
+          message: 'Direct Web Downloader opened (No app needed to download MP4)!'
+        });
+        setTimeout(() => setDownloadNotice(null), 4000);
+        recordDownloadHistory();
+      }
     } catch (err) {
       console.warn('Download error:', err);
+      setDownloadNotice({
+        loading: false,
+        title: movie.title,
+        message: 'Download could not start. Please check the video link.'
+      });
+      setTimeout(() => setDownloadNotice(null), 4000);
     }
+  };
+
+  // 3-Second Circular Loading Spinner when clicking Download
+  const handleDownloadButtonClick = () => {
+    if (!hasDownloadLink || isDownloadLoading) return;
+
+    setIsDownloadLoading(true);
+    setDownloadProgress(0);
+    setIsDownloadDone(false);
+
+    const DURATION = 3000; // Exactly 3 seconds
+    const startTime = Date.now();
+
+    if (downloadIntervalRef.current) clearInterval(downloadIntervalRef.current);
+
+    downloadIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const p = Math.min(100, (elapsed / DURATION) * 100);
+      setDownloadProgress(p);
+
+      if (elapsed >= DURATION) {
+        if (downloadIntervalRef.current) clearInterval(downloadIntervalRef.current);
+        setIsDownloadLoading(false);
+        setIsDownloadDone(true);
+        executeDirectDownload();
+        setTimeout(() => {
+          setIsDownloadDone(false);
+        }, 3500);
+      }
+    }, 30);
   };
 
   // 5 related trending movies excluding current movie
@@ -362,7 +437,6 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
               key={`webtor-${movie.id}-${playerKey}`}
               magnet={videoSource.magnet || videoSource.url}
               dataPath={videoSource.dataPath}
-              poster={movie.backdropUrl || movie.posterUrl}
               title={movie.title}
               onReload={handleReloadPlayer}
             />
@@ -407,12 +481,27 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
           ) : (
             <video
               key={`video-${videoSource.url}-${playerKey}`}
-              src={videoSource.url}
+              src={
+                videoSource.url.includes('#')
+                  ? videoSource.url
+                  : `${videoSource.url}#t=600`
+              }
               controls
               playsInline
-              poster={movie.backdropUrl || movie.posterUrl}
-              className="w-full h-full object-contain"
+              preload="metadata"
+              className="w-full h-full object-contain bg-black"
               onError={() => setVideoError(true)}
+              onPlay={(e) => {
+                const vid = e.currentTarget;
+                if (!hasStartedPlayingRef.current) {
+                  hasStartedPlayingRef.current = true;
+                  // If video is at preview timestamp (around 10 mins), start playing from beginning
+                  if (vid.currentTime >= 590) {
+                    vid.currentTime = 0;
+                    vid.play().catch(() => {});
+                  }
+                }
+              }}
             >
               Your browser does not support the video tag.
             </video>
@@ -477,73 +566,64 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
           </span>
         </button>
 
-        {/* Download with Dropdown */}
-        <div className="relative" ref={downloadDropdownRef}>
-          <button
-            type="button"
-            onClick={() => setIsDownloadDropdownOpen(prev => !prev)}
-            className="flex flex-col items-center gap-1.5 text-neutral-300 hover:text-white transition-colors cursor-pointer group active:scale-95"
-            title="Download Movie"
-          >
-            <Download className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2] group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] sm:text-xs font-medium tracking-tight flex items-center gap-0.5">
-              Download
-            </span>
-          </button>
-
-          {/* Quality Dropdown Menu with uTorrent Icon */}
-          {isDownloadDropdownOpen && (
-            <div className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 mt-3 w-64 sm:w-72 rounded-xl bg-neutral-900 border border-neutral-800 shadow-2xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-3 py-2 border-b border-neutral-800/80 mb-1">
-                <p className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider">Select Download Quality</p>
-                <p className="text-[10px] text-neutral-500">Choose resolution to begin download</p>
-              </div>
-              <div className="space-y-1">
-                {allDownloadOptions.map((opt) => {
-                  const isDownloaded = downloadedQuality === opt.quality;
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => {
-                        handleDownloadFile(opt);
-                        setIsDownloadDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-neutral-800/90 text-left transition-colors cursor-pointer group/opt"
-                    >
-                      {/* Left Side: Torrent Icon + Quality Label */}
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <img
-                          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjVd0GxoHYBtIoohsVY9UbdNeg2p6PTAC_tf784XzxPrGUvvyhJiRGGxgibxZUT22nePS_RCn9Yv9xTCciMtfkoo7RCCrWgco84mSwS5b18J1pnb7Q3mDaE3s3wq0nb2XI3-88ZxsiQs8sx5buuhvBjI6re7UwcftTR4E1fOWb-eTghQlQEHsIEwPlZHsZW/s0/ut2939ue0c-utorrent-logo-utorrent-logo-social-social-media-torrent-icon-free-download.png"
-                          alt="Torrent"
-                          className="w-5 h-5 rounded-xs object-contain shrink-0"
-                        />
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-xs font-semibold text-white group-hover/opt:text-emerald-400 transition-colors truncate">
-                            {opt.label}
-                          </span>
-                          <span className="text-[10px] text-neutral-400">{opt.quality} Video</span>
-                        </div>
-                      </div>
-
-                      {/* Right Side: Size & Download status icon */}
-                      <div className="flex items-center gap-2 shrink-0 ml-2">
-                        <span className="text-[10px] font-mono text-neutral-300 bg-neutral-950 px-2 py-0.5 rounded border border-neutral-800">
-                          {opt.size}
-                        </span>
-                        {isDownloaded ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        ) : (
-                          <Download className="w-3.5 h-3.5 text-neutral-500 group-hover/opt:text-white transition-colors" />
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+        {/* Download Button with 3-Second Circular Loading Spinner (Direct Download, No Dropdown) */}
+        <button
+          type="button"
+          onClick={hasDownloadLink ? handleDownloadButtonClick : undefined}
+          disabled={!hasDownloadLink || isDownloadLoading}
+          className={`flex flex-col items-center gap-1.5 transition-colors select-none ${
+            !hasDownloadLink
+              ? 'opacity-40 cursor-not-allowed text-neutral-500'
+              : 'text-neutral-300 hover:text-white cursor-pointer group active:scale-95 disabled:cursor-wait'
+          }`}
+          title={!hasDownloadLink ? 'Download not available for this movie' : 'Download Movie'}
+        >
+          {isDownloadLoading ? (
+            <div className="relative w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="14"
+                  className="stroke-neutral-800"
+                  strokeWidth="3.5"
+                  fill="transparent"
+                />
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="14"
+                  className="stroke-neutral-400"
+                  strokeWidth="3.5"
+                  strokeDasharray={2 * Math.PI * 14}
+                  strokeDashoffset={2 * Math.PI * 14 * (1 - downloadProgress / 100)}
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+              </svg>
             </div>
+          ) : isDownloadDone ? (
+            <Check className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 stroke-[2.5]" />
+          ) : (
+            <Download className={`w-5 h-5 sm:w-6 sm:h-6 stroke-[2] ${hasDownloadLink ? 'group-hover:scale-110 transition-transform' : ''}`} />
           )}
-        </div>
+
+          <span className={`text-[10px] sm:text-xs font-medium tracking-tight ${
+            !hasDownloadLink
+              ? 'text-neutral-500'
+              : isDownloadLoading
+              ? 'text-neutral-400 font-mono'
+              : isDownloadDone
+              ? 'text-emerald-400 font-bold'
+              : ''
+          }`}>
+            {isDownloadLoading
+              ? `${Math.min(100, Math.floor(downloadProgress))}%`
+              : isDownloadDone
+              ? 'Starting...'
+              : 'Download'}
+          </span>
+        </button>
 
         {/* Share */}
         <button
@@ -594,6 +674,23 @@ export const MovieDetailScreen: React.FC<MovieDetailScreenProps> = ({
             ))}
           </div>
         </section>
+      )}
+
+      {/* 4. Floating In-App Download Status Toast */}
+      {downloadNotice && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-[calc(100vw-3rem)] bg-neutral-900 border border-neutral-700/80 rounded-xl shadow-2xl p-3.5 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-200">
+          <div className="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+            {downloadNotice.loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Check className="w-5 h-5 stroke-[2.5]" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-white truncate">{downloadNotice.title}</p>
+            <p className="text-[11px] text-neutral-400 mt-0.5 leading-snug">{downloadNotice.message}</p>
+          </div>
+        </div>
       )}
 
     </div>

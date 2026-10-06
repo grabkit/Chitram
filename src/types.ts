@@ -25,6 +25,7 @@ export interface Movie {
   downloadOptions?: DownloadOption[];
   extraDownloadOptions?: DownloadOption[];
   videoSampleUrl: string;
+  downloadUrl?: string;
   trailerTitle?: string;
   imdbUrl?: string;
   isCustom?: boolean;

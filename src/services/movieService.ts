@@ -59,6 +59,7 @@ export function subscribeToGlobalMovies(
               posterUrl: data.posterUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=700&q=80',
               backdropUrl: data.backdropUrl || data.posterUrl || '',
               videoSampleUrl: data.videoSampleUrl || 'https://www.youtube.com/embed/g3JUbg4v6gc',
+              downloadUrl: data.downloadUrl || data.downloadLink || (options && options[0]?.url) || undefined,
               downloadSizes: data.downloadSizes || {
                 '4K': '3.8 GB',
                 '1080p': '1.8 GB',
@@ -149,6 +150,7 @@ export async function publishMovieToFirestore(movie: Movie): Promise<void> {
     posterUrl: String(movie.posterUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=700&q=80'),
     backdropUrl: String(movie.backdropUrl || movie.posterUrl || ''),
     videoSampleUrl: String(movie.videoSampleUrl || 'https://www.youtube.com/embed/g3JUbg4v6gc'),
+    downloadUrl: String(movie.downloadUrl || (cleanOptions[0]?.url) || '').trim(),
     downloadSizes: movie.downloadSizes || {
       '4K': '3.8 GB',
       '1080p': '1.8 GB',
